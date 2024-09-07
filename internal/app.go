@@ -114,6 +114,7 @@ func GenerateHTML(graph *Graph) string {
             stroke-opacity: 0.6;
             fill: none;
             marker-end: url(#arrowhead);
+            transition: stroke 0.3s, stroke-width 0.3s;
         }
         .node text {
             fill: black;
@@ -130,7 +131,22 @@ func GenerateHTML(graph *Graph) string {
         }
         .highlighted {
             stroke: #ff7f0e;
-            stroke-width: 2px;
+            stroke-width: 3px;
+        }
+        .node-highlighted rect {
+            stroke: #ff7f0e;
+            stroke-width: 3px;
+        }
+        .link-highlighted {
+            stroke: #ff7f0e;
+            stroke-width: 3px;
+            filter: drop-shadow(0 0 3px #ff7f0e);
+        }
+        .node-highlighted-text {
+            font-weight: bold;
+        }
+        .node-highlighted-bg {
+            fill: #fff7e6;
         }
     </style>
 </head>
@@ -338,7 +354,16 @@ func GenerateHTML(graph *Graph) string {
         }).on("mouseout", function() {
             clearHighlight();
         }).on("click", function(event, d) {
-            focusOnNode(d);
+            focusOnParentNode(d);
+        });
+
+        // Highlight edges on mouseover
+        link.on("mouseover", function(event, d) {
+            d3.select(this).classed("link-highlighted", true);
+            highlightConnectedNodes(d);
+        }).on("mouseout", function() {
+            d3.select(this).classed("link-highlighted", false);
+            clearNodeHighlight();
         });
 
         function highlightPathToRoot(node) {
@@ -358,17 +383,34 @@ func GenerateHTML(graph *Graph) string {
             link.classed("highlighted", false);
         }
 
-        function focusOnNode(d) {
-            const scale = 0.8;
-            const x = width / 2 - d.x * scale;
-            const y = height / 2 - d.y * scale;
+        function highlightConnectedNodes(d) {
+            d3.select(d.source.node).classed("node-highlighted", true);
+            d3.select(d.target.node).classed("node-highlighted", true);
+            d3.select(d.source.node).select("rect").classed("node-highlighted-bg", true);
+            d3.select(d.target.node).select("rect").classed("node-highlighted-bg", true);
+            d3.select(d.source.node).select("text").classed("node-highlighted-text", true);
+            d3.select(d.target.node).select("text").classed("node-highlighted-text", true);
+        }
 
-            svg.transition()
-                .duration(750)
-                .call(
-                    zoom.transform,
-                    d3.zoomIdentity.translate(x, y).scale(scale)
-                );
+        function clearNodeHighlight() {
+            node.classed("node-highlighted", false);
+            node.select("rect").classed("node-highlighted-bg", false);
+            node.select("text").classed("node-highlighted-text", false);
+        }
+
+        function focusOnParentNode(d) {
+            if (d.parent) {
+                const scale = 2; // Increased zoom level
+                const x = width / 2 - d.parent.x * scale;
+                const y = height / 2 - d.parent.y * scale;
+
+                svg.transition()
+                    .duration(750)
+                    .call(
+                        zoom.transform,
+                        d3.zoomIdentity.translate(x, y).scale(scale)
+                    );
+            }
         }
     </script>
 </body>
