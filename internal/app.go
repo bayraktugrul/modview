@@ -174,14 +174,31 @@ func GenerateHTML(graph *Graph) string {
                 return parent ? parent.source : null;
             })(data.nodes);
 
+        // Calculate the number of nodes and adjust the layout size
+        const nodeCount = hierarchy.descendants().length;
+        const dynamicWidth = Math.max(width, nodeCount * 150); // Adjust the multiplier as needed
+        const dynamicHeight = Math.max(height, nodeCount * 50); // Adjust the multiplier as needed
+
         const treeLayout = d3.tree()
-            .size([width - 200, height - 200])
+            .size([dynamicWidth - 200, dynamicHeight - 200])
             .separation((a, b) => (a.parent == b.parent ? 2 : 3));
 
         const treeData = treeLayout(hierarchy);
 
-        // Adjust y-coordinates to start from top
-        treeData.each(d => d.y = height / 6 + d.depth * 150);
+        // Adjust y-coordinates to start from top and ensure minimum vertical spacing
+        const minVerticalSpacing = 100; // Adjust this value as needed
+        treeData.each(d => {
+            d.y = height / 6 + d.depth * Math.max(150, minVerticalSpacing);
+        });
+
+        // Create a zoom behavior
+        const zoom = d3.zoom()
+            .scaleExtent([0.1, 2])
+            .on("zoom", (event) => {
+                g.attr("transform", event.transform);
+            });
+
+        svg.call(zoom);
 
         const link = g.selectAll(".link")
             .data(treeData.links())
@@ -215,21 +232,12 @@ func GenerateHTML(graph *Graph) string {
             .text(d => d.data.id)
             .attr("dy", "0.35em");
 
-        // Zoom functionality
-        const zoom = d3.zoom()
-            .scaleExtent([0.1, 2])
-            .on("zoom", function(event) {
-                g.attr("transform", event.transform);
-            });
-
-        svg.call(zoom);
-
-        // Center the graph
+        // Initial centering and scaling
         const rootNode = treeData.descendants()[0];
         const scale = 0.8;
-        const x = width / 2 - rootNode.x * scale;
-        const y = height / 6;
-        svg.call(zoom.transform, d3.zoomIdentity.translate(x, y).scale(scale));
+        const initialX = width / 2 - rootNode.x * scale;
+        const initialY = height / 6;
+        svg.call(zoom.transform, d3.zoomIdentity.translate(initialX, initialY).scale(scale));
     </script>
 </body>
 </html>
