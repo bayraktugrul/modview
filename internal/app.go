@@ -118,9 +118,16 @@ func GenerateHTML(graph *Graph) string {
         }
         .node text {
             fill: black;
-            font-size: 12px;
             text-anchor: middle;
             dominant-baseline: middle;
+        }
+        .tooltip {
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -176,19 +183,25 @@ func GenerateHTML(graph *Graph) string {
 
         // Calculate the number of nodes and adjust the layout size
         const nodeCount = hierarchy.descendants().length;
-        const dynamicWidth = Math.max(width, nodeCount * 150); // Adjust the multiplier as needed
-        const dynamicHeight = Math.max(height, nodeCount * 50); // Adjust the multiplier as needed
+        const dynamicWidth = Math.max(width, nodeCount * 100);
+        const dynamicHeight = Math.max(height, nodeCount * 50);
 
         const treeLayout = d3.tree()
             .size([dynamicWidth - 200, dynamicHeight - 200])
-            .separation((a, b) => (a.parent == b.parent ? 2 : 3));
+            .separation((a, b) => {
+                // If the nodes have the same parent and no children, stack them vertically
+                if (a.parent === b.parent && (!a.children || a.children.length === 0) && (!b.children || b.children.length === 0)) {
+                    return 1;
+                }
+                return (a.parent == b.parent ? 2 : 3);
+            });
 
         const treeData = treeLayout(hierarchy);
 
         // Adjust y-coordinates to start from top and ensure minimum vertical spacing
-        const minVerticalSpacing = 100; // Adjust this value as needed
+        const minVerticalSpacing = 50;
         treeData.each(d => {
-            d.y = height / 6 + d.depth * Math.max(150, minVerticalSpacing);
+            d.y = height / 6 + d.depth * Math.max(100, minVerticalSpacing);
         });
 
         // Create a zoom behavior
@@ -214,11 +227,14 @@ func GenerateHTML(graph *Graph) string {
             .attr("class", "node")
             .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
 
+        // Adjust font size based on node count
+        const fontSize = nodeCount > 50 ? 8 : (nodeCount > 20 ? 10 : 12);
+
         node.append("rect")
-            .attr("width", d => d.data.id.length * 8 + 20)
-            .attr("height", 30)
-            .attr("x", d => -(d.data.id.length * 8 + 20) / 2)
-            .attr("y", -15)
+            .attr("width", d => Math.min(d.data.id.length * (fontSize * 0.6) + 20, 100))
+            .attr("height", 25)
+            .attr("x", d => -Math.min(d.data.id.length * (fontSize * 0.6) + 20, 100) / 2)
+            .attr("y", -12.5)
             .attr("rx", 5)
             .attr("ry", 5)
             .attr("fill", d => {
@@ -229,8 +245,29 @@ func GenerateHTML(graph *Graph) string {
             });
 
         node.append("text")
-            .text(d => d.data.id)
-            .attr("dy", "0.35em");
+            .text(d => d.data.id.length > 15 ? d.data.id.substring(0, 12) + "..." : d.data.id)
+            .attr("dy", "0.35em")
+            .style("font-size", fontSize + "px");
+
+        // Create tooltip
+        const tooltip = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+
+        // Add mouseover and mouseout events for tooltip
+        node.on("mouseover", function(event, d) {
+            tooltip.transition()
+                .duration(200)
+                .style("opacity", .9);
+            tooltip.html(d.data.id)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+        })
+        .on("mouseout", function(d) {
+            tooltip.transition()
+                .duration(500)
+                .style("opacity", 0);
+        });
 
         // Initial centering and scaling
         const rootNode = treeData.descendants()[0];
