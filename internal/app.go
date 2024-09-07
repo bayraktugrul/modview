@@ -152,12 +152,12 @@ func GenerateHTML(graph *Graph) string {
         // Define arrowhead marker
         svg.append("defs").append("marker")
             .attr("id", "arrowhead")
-            .attr("viewBox", "-0 -5 10 10")
-            .attr("refX", 20)
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 15)
             .attr("refY", 0)
             .attr("orient", "auto")
-            .attr("markerWidth", 6)
-            .attr("markerHeight", 6)
+            .attr("markerWidth", 8)
+            .attr("markerHeight", 8)
             .attr("xoverflow", "visible")
             .append("svg:path")
             .attr("d", "M 0,-5 L 10 ,0 L 0,5")
@@ -175,24 +175,27 @@ func GenerateHTML(graph *Graph) string {
             })(data.nodes);
 
         const treeLayout = d3.tree()
-            .size([width - 100, height - 100])
+            .size([width - 200, height - 200])
             .separation((a, b) => (a.parent == b.parent ? 2 : 3));
 
         const treeData = treeLayout(hierarchy);
+
+        // Adjust y-coordinates to start from top
+        treeData.each(d => d.y = height / 6 + d.depth * 150);
 
         const link = g.selectAll(".link")
             .data(treeData.links())
             .enter().append("path")
             .attr("class", "link")
-            .attr("d", d3.linkHorizontal()
-                .x(d => d.y)
-                .y(d => d.x));
+            .attr("d", d3.linkVertical()
+                .x(d => d.x)
+                .y(d => d.y));
 
         const node = g.selectAll(".node")
             .data(treeData.descendants())
             .enter().append("g")
             .attr("class", "node")
-            .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
+            .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
 
         node.append("rect")
             .attr("width", d => d.data.id.length * 8 + 20)
@@ -224,8 +227,8 @@ func GenerateHTML(graph *Graph) string {
         // Center the graph
         const rootNode = treeData.descendants()[0];
         const scale = 0.8;
-        const x = width / 2 - rootNode.y * scale;
-        const y = height / 2 - rootNode.x * scale;
+        const x = width / 2 - rootNode.x * scale;
+        const y = height / 6;
         svg.call(zoom.transform, d3.zoomIdentity.translate(x, y).scale(scale));
     </script>
 </body>
