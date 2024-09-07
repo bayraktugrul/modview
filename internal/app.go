@@ -128,6 +128,10 @@ func GenerateHTML(graph *Graph) string {
             border-radius: 3px;
             pointer-events: none;
         }
+        .highlighted {
+            stroke: #ff7f0e;
+            stroke-width: 2px;
+        }
     </style>
 </head>
 <body>
@@ -327,6 +331,45 @@ func GenerateHTML(graph *Graph) string {
         const initialX = width / 2 - rootNode.x * scale;
         const initialY = height / 6;
         svg.call(zoom.transform, d3.zoomIdentity.translate(initialX, initialY).scale(scale));
+
+        // Highlight path to root on mouseover
+        node.on("mouseover", function(event, d) {
+            highlightPathToRoot(d);
+        }).on("mouseout", function() {
+            clearHighlight();
+        }).on("click", function(event, d) {
+            focusOnNode(d);
+        });
+
+        function highlightPathToRoot(node) {
+            let current = node;
+            while (current) {
+                d3.select(current.node).select("rect").classed("highlighted", true);
+                if (current.parent) {
+                    const linkToParent = link.filter(l => l.target === current && l.source === current.parent);
+                    linkToParent.classed("highlighted", true);
+                }
+                current = current.parent;
+            }
+        }
+
+        function clearHighlight() {
+            node.select("rect").classed("highlighted", false);
+            link.classed("highlighted", false);
+        }
+
+        function focusOnNode(d) {
+            const scale = 0.8;
+            const x = width / 2 - d.x * scale;
+            const y = height / 2 - d.y * scale;
+
+            svg.transition()
+                .duration(750)
+                .call(
+                    zoom.transform,
+                    d3.zoomIdentity.translate(x, y).scale(scale)
+                );
+        }
     </script>
 </body>
 </html>
