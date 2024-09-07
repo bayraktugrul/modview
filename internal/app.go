@@ -130,23 +130,35 @@ func GenerateHTML(graph *Graph) string {
             pointer-events: none;
         }
         .highlighted {
-            stroke: #ff7f0e;
+            stroke: #0288D1;
             stroke-width: 3px;
         }
         .node-highlighted rect {
-            stroke: #ff7f0e;
+            stroke: #0288D1;
             stroke-width: 3px;
         }
         .link-highlighted {
-            stroke: #ff7f0e;
+            stroke: #0288D1;
             stroke-width: 3px;
-            filter: drop-shadow(0 0 3px #ff7f0e);
+            filter: drop-shadow(0 0 3px #0288D1);
         }
         .node-highlighted-text {
             font-weight: bold;
         }
         .node-highlighted-bg {
             fill: #fff7e6;
+        }
+        .node-picked-highlight rect {
+            stroke: #0277BD;
+            stroke-width: 3px;
+        }
+        .node-unpicked-highlight rect {
+            stroke: #546E7A;
+            stroke-width: 3px;
+        }
+        .node-hover rect {
+            stroke: #0288D1;
+            stroke-width: 3px;
         }
     </style>
 </head>
@@ -232,16 +244,16 @@ func GenerateHTML(graph *Graph) string {
             .data(treeData.links())
             .enter().append("path")
             .attr("class", "link")
-            .attr("d", d3.linkVertical()
-                .x(d => d.x)
-                .y(d => d.y))
+            .attr("d", d3.linkHorizontal()
+                .x(d => d.y)
+                .y(d => d.x))
             .style("stroke-width", nodeCount > 50 ? "0.5px" : (nodeCount > 20 ? "1px" : "2px"));
 
         const node = g.selectAll(".node")
             .data(treeData.descendants())
             .enter().append("g")
             .attr("class", "node")
-            .attr("transform", d => "translate(" + d.x + "," + d.y + ")");
+            .attr("transform", d => "translate(" + d.y + "," + d.x + ")");
 
         // Adjust font size and node size based on node count
         const fontSize = nodeCount > 50 ? 6 : (nodeCount > 20 ? 8 : 10);
@@ -325,8 +337,8 @@ func GenerateHTML(graph *Graph) string {
         // Adjust node positions to prevent overlapping
         const simulation = d3.forceSimulation(treeData.descendants())
             .force("collide", d3.forceCollide().radius(d => nodeWidth(d) / 2 + 10))
-            .force("x", d3.forceX(d => d.x).strength(1))
-            .force("y", d3.forceY(d => d.y).strength(1))
+            .force("x", d3.forceX(d => d.y).strength(1))
+            .force("y", d3.forceY(d => d.x).strength(1))
             .stop();
 
         for (let i = 0; i < 100; i++) {
@@ -334,25 +346,29 @@ func GenerateHTML(graph *Graph) string {
         }
 
         // Update node positions
-        node.attr("transform", d => "translate(" + d.x + "," + d.y + ")");
+        node.attr("transform", d => "translate(" + d.y + "," + d.x + ")");
 
         // Update links
-        link.attr("d", d3.linkVertical()
-            .x(d => d.x)
-            .y(d => d.y));
+        link.attr("d", d3.linkHorizontal()
+            .x(d => d.y)
+            .y(d => d.x));
 
         // Initial centering and scaling
         const rootNode = treeData.descendants()[0];
         const scale = 0.8;
-        const initialX = width / 2 - rootNode.x * scale;
+        const initialX = width / 2 - rootNode.y * scale;
         const initialY = height / 6;
         svg.call(zoom.transform, d3.zoomIdentity.translate(initialX, initialY).scale(scale));
 
         // Highlight path to root on mouseover
         node.on("mouseover", function(event, d) {
             highlightPathToRoot(d);
+            highlightNodeAndRoot(d);
+            d3.select(this).classed("node-hover", true);
         }).on("mouseout", function() {
             clearHighlight();
+            clearNodeAndRootHighlight();
+            d3.select(this).classed("node-hover", false);
         }).on("click", function(event, d) {
             focusOnParentNode(d);
         });
@@ -401,8 +417,8 @@ func GenerateHTML(graph *Graph) string {
         function focusOnParentNode(d) {
             if (d.parent) {
                 const scale = 2; // Increased zoom level
-                const x = width / 2 - d.parent.x * scale;
-                const y = height / 2 - d.parent.y * scale;
+                const x = width / 2 - d.parent.y * scale;
+                const y = height / 2 - d.parent.x * scale;
 
                 svg.transition()
                     .duration(750)
@@ -411,6 +427,19 @@ func GenerateHTML(graph *Graph) string {
                         d3.zoomIdentity.translate(x, y).scale(scale)
                     );
             }
+        }
+
+        function highlightNodeAndRoot(d) {
+            const rootNode = treeData.descendants().find(node => node.data.id === data.root);
+            const highlightClass = d.data.picked ? "node-picked-highlight" : "node-unpicked-highlight";
+            
+            d3.select(d.node).classed(highlightClass, true);
+            d3.select(rootNode.node).classed(highlightClass, true);
+        }
+
+        function clearNodeAndRootHighlight() {
+            node.classed("node-picked-highlight", false);
+            node.classed("node-unpicked-highlight", false);
         }
     </script>
 </body>
