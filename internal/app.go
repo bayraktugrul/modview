@@ -114,6 +114,7 @@ func GenerateHTML(graph *Graph) string {
             stroke-opacity: 0.6;
             stroke-width: 2px;
             fill: none;
+            marker-end: url(#arrowhead);
         }
         .node text {
             fill: black;
@@ -148,113 +149,84 @@ func GenerateHTML(graph *Graph) string {
             .attr("width", width)
             .attr("height", height);
 
-        const simulation = d3.forceSimulation(data.nodes)
-            .force("link", d3.forceLink(data.links).id(d => d.id).distance(200))
-            .force("charge", d3.forceManyBody().strength(-1000))
-            .force("center", d3.forceCenter(width / 2, height / 2));
-
-        const link = svg.append("g")
-            .selectAll("path")
-            .data(data.links)
-            .join("path")
-            .attr("class", "link")
-            .attr("marker-end", "url(#arrowhead)");
-
+        // Define arrowhead marker
         svg.append("defs").append("marker")
             .attr("id", "arrowhead")
             .attr("viewBox", "-0 -5 10 10")
-            .attr("refX", 30)
+            .attr("refX", 20)
             .attr("refY", 0)
             .attr("orient", "auto")
-            .attr("markerWidth", 8)
-            .attr("markerHeight", 8)
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
             .attr("xoverflow", "visible")
             .append("svg:path")
             .attr("d", "M 0,-5 L 10 ,0 L 0,5")
             .attr("fill", "#999")
             .style("stroke", "none");
 
-        const node = svg.append("g")
-            .selectAll("g")
-            .data(data.nodes)
-            .join("g")
-            .attr("class", "node");
+        const g = svg.append("g");
+
+        // Create a hierarchical layout
+        const hierarchy = d3.stratify()
+            .id(d => d.id)
+            .parentId(d => {
+                const parent = data.links.find(link => link.target === d.id);
+                return parent ? parent.source : null;
+            })(data.nodes);
+
+        const treeLayout = d3.tree()
+            .size([width - 100, height - 100])
+            .separation((a, b) => (a.parent == b.parent ? 2 : 3));
+
+        const treeData = treeLayout(hierarchy);
+
+        const link = g.selectAll(".link")
+            .data(treeData.links())
+            .enter().append("path")
+            .attr("class", "link")
+            .attr("d", d3.linkHorizontal()
+                .x(d => d.y)
+                .y(d => d.x));
+
+        const node = g.selectAll(".node")
+            .data(treeData.descendants())
+            .enter().append("g")
+            .attr("class", "node")
+            .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
 
         node.append("rect")
-            .attr("width", d => d.id.length * 8 + 20)
+            .attr("width", d => d.data.id.length * 8 + 20)
             .attr("height", 30)
-            .attr("x", d => -(d.id.length * 8 + 20) / 2)
+            .attr("x", d => -(d.data.id.length * 8 + 20) / 2)
             .attr("y", -15)
             .attr("rx", 5)
             .attr("ry", 5)
             .attr("fill", d => {
-                if (d.id === data.root) return "#4CAF50";
-                if (d.picked === true) return "#90EE90";
-                if (d.picked === false) return "#FFA07A";
+                if (d.data.id === data.root) return "#4CAF50";
+                if (d.data.picked === true) return "#90EE90";
+                if (d.data.picked === false) return "#ccc";
                 return "#ccc";
             });
 
         node.append("text")
-            .text(d => d.id)
+            .text(d => d.data.id)
             .attr("dy", "0.35em");
-
-        simulation.on("tick", () => {
-            link.attr("d", d => {
-                const dx = d.target.x - d.source.x,
-                      dy = d.target.y - d.source.y,
-                      dr = Math.sqrt(dx * dx + dy * dy);
-                const sourceWidth = d.source.id.length * 8 + 20,
-                      targetWidth = d.target.id.length * 8 + 20;
-                const sourceX = d.source.x + (dx * sourceWidth) / (2 * dr),
-                      sourceY = d.source.y + (dy * 15) / dr,
-                      targetX = d.target.x - (dx * targetWidth) / (2 * dr),
-                      targetY = d.target.y - (dy * 15) / dr;
-                return ` + "`M${sourceX},${sourceY}L${targetX},${targetY}`" + `;
-            });
-
-            node.attr("transform", d => ` + "`translate(${d.x},${d.y})`" + `);
-        });
-
-        // Set root node position
-        const rootNode = data.nodes.find(n => n.id === data.root);
-        if (rootNode) {
-            rootNode.fx = width / 2;
-            rootNode.fy = 50;
-        }
 
         // Zoom functionality
         const zoom = d3.zoom()
-            .scaleExtent([0.1, 10])
-            .on("zoom", (event) => {
-                svg.selectAll("g").attr("transform", event.transform);
+            .scaleExtent([0.1, 2])
+            .on("zoom", function(event) {
+                g.attr("transform", event.transform);
             });
 
         svg.call(zoom);
 
-        // Drag functionality
-        function dragstarted(event) {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            event.subject.fx = event.subject.x;
-            event.subject.fy = event.subject.y;
-        }
-
-        function dragged(event) {
-            event.subject.fx = event.x;
-            event.subject.fy = event.y;
-        }
-
-        function dragended(event) {
-            if (!event.active) simulation.alphaTarget(0);
-            if (event.subject.id !== data.root) {
-                event.subject.fx = null;
-                event.subject.fy = null;
-            }
-        }
-
-        node.call(d3.drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended));
+        // Center the graph
+        const rootNode = treeData.descendants()[0];
+        const scale = 0.8;
+        const x = width / 2 - rootNode.y * scale;
+        const y = height / 2 - rootNode.x * scale;
+        svg.call(zoom.transform, d3.zoomIdentity.translate(x, y).scale(scale));
     </script>
 </body>
 </html>
