@@ -245,7 +245,7 @@ func GenerateHTML(graph *Graph) string {
 
         // Adjust font size and node size based on node count
         const fontSize = nodeCount > 50 ? 6 : (nodeCount > 20 ? 8 : 10);
-        const nodeWidth = d => Math.min(d.data.id.length * (fontSize * 0.6) + 10, 120);
+        const nodeWidth = d => Math.max(Math.min(d.data.id.length * (fontSize * 0.6) + 10, 120), 60);
         const nodeHeight = fontSize * 3;
 
         node.append("rect")
@@ -256,9 +256,9 @@ func GenerateHTML(graph *Graph) string {
             .attr("rx", 3)
             .attr("ry", 3)
             .attr("fill", d => {
-                if (d.data.id === data.root) return "#4CAF50";
-                if (d.data.picked === true) return "#90EE90";
-                if (d.data.picked === false) return "#ccc";
+                if (d.data.id === data.root) return "#00BCD4";
+                if (d.data.picked === true) return "#B2EBF2";
+                if (d.data.picked === false) return "#CFD8DC";
                 return "#ccc";
             });
 
