@@ -112,7 +112,6 @@ func GenerateHTML(graph *Graph) string {
         .link {
             stroke: #999;
             stroke-opacity: 0.6;
-            stroke-width: 2px;
             fill: none;
             marker-end: url(#arrowhead);
         }
@@ -125,8 +124,8 @@ func GenerateHTML(graph *Graph) string {
             position: absolute;
             background-color: white;
             border: 1px solid #ddd;
-            padding: 10px;
-            border-radius: 5px;
+            padding: 5px;
+            border-radius: 3px;
             pointer-events: none;
         }
     </style>
@@ -182,26 +181,22 @@ func GenerateHTML(graph *Graph) string {
             })(data.nodes);
 
         // Calculate the number of nodes and adjust the layout size
-        const nodeCount = hierarchy.descendants().length;
-        const dynamicWidth = Math.max(width, nodeCount * 100);
-        const dynamicHeight = Math.max(height, nodeCount * 50);
+        const nodeCount = data.nodes.length;
+        const dynamicWidth = Math.max(width, nodeCount * 80);
+        const dynamicHeight = Math.max(height, nodeCount * 40);
 
         const treeLayout = d3.tree()
             .size([dynamicWidth - 200, dynamicHeight - 200])
             .separation((a, b) => {
-                // If the nodes have the same parent and no children, stack them vertically
-                if (a.parent === b.parent && (!a.children || a.children.length === 0) && (!b.children || b.children.length === 0)) {
-                    return 1;
-                }
-                return (a.parent == b.parent ? 2 : 3);
+                return (a.parent == b.parent ? 1 : 2) / (nodeCount > 50 ? 2 : 1);
             });
 
         const treeData = treeLayout(hierarchy);
 
         // Adjust y-coordinates to start from top and ensure minimum vertical spacing
-        const minVerticalSpacing = 50;
+        const minVerticalSpacing = nodeCount > 50 ? 30 : 50;
         treeData.each(d => {
-            d.y = height / 6 + d.depth * Math.max(100, minVerticalSpacing);
+            d.y = height / 6 + d.depth * Math.max(80, minVerticalSpacing);
         });
 
         // Create a zoom behavior
@@ -219,24 +214,27 @@ func GenerateHTML(graph *Graph) string {
             .attr("class", "link")
             .attr("d", d3.linkVertical()
                 .x(d => d.x)
-                .y(d => d.y));
+                .y(d => d.y))
+            .style("stroke-width", nodeCount > 50 ? "0.5px" : (nodeCount > 20 ? "1px" : "2px"));
 
         const node = g.selectAll(".node")
             .data(treeData.descendants())
             .enter().append("g")
             .attr("class", "node")
-            .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+            .attr("transform", d => "translate(" + d.x + "," + d.y + ")");
 
-        // Adjust font size based on node count
-        const fontSize = nodeCount > 50 ? 8 : (nodeCount > 20 ? 10 : 12);
+        // Adjust font size and node size based on node count
+        const fontSize = nodeCount > 50 ? 6 : (nodeCount > 20 ? 8 : 10);
+        const nodeWidth = d => Math.min(d.data.id.length * (fontSize * 0.6) + 10, 120);
+        const nodeHeight = fontSize * 3;
 
         node.append("rect")
-            .attr("width", d => Math.min(d.data.id.length * (fontSize * 0.6) + 20, 100))
-            .attr("height", 25)
-            .attr("x", d => -Math.min(d.data.id.length * (fontSize * 0.6) + 20, 100) / 2)
-            .attr("y", -12.5)
-            .attr("rx", 5)
-            .attr("ry", 5)
+            .attr("width", d => nodeWidth(d))
+            .attr("height", nodeHeight)
+            .attr("x", d => -nodeWidth(d) / 2)
+            .attr("y", -nodeHeight / 2)
+            .attr("rx", 3)
+            .attr("ry", 3)
             .attr("fill", d => {
                 if (d.data.id === data.root) return "#4CAF50";
                 if (d.data.picked === true) return "#90EE90";
@@ -244,30 +242,84 @@ func GenerateHTML(graph *Graph) string {
                 return "#ccc";
             });
 
-        node.append("text")
-            .text(d => d.data.id.length > 15 ? d.data.id.substring(0, 12) + "..." : d.data.id)
+        const nodeText = node.append("text")
             .attr("dy", "0.35em")
             .style("font-size", fontSize + "px");
+
+        // Function to truncate text
+        function truncateText(text, maxLength) {
+            return text.length > maxLength ? text.slice(0, maxLength - 3) + "..." : text;
+        }
 
         // Create tooltip
         const tooltip = d3.select("body").append("div")
             .attr("class", "tooltip")
             .style("opacity", 0);
 
-        // Add mouseover and mouseout events for tooltip
-        node.on("mouseover", function(event, d) {
-            tooltip.transition()
-                .duration(200)
-                .style("opacity", .9);
-            tooltip.html(d.data.id)
-                .style("left", (event.pageX + 10) + "px")
-                .style("top", (event.pageY - 28) + "px");
-        })
-        .on("mouseout", function(d) {
-            tooltip.transition()
-                .duration(500)
-                .style("opacity", 0);
+        nodeText.each(function(d) {
+            const text = d3.select(this);
+            const words = d.data.id.split(/(?=[A-Z@])/g);
+            const lineHeight = 1.1;
+            const y = text.attr("y");
+            const dy = parseFloat(text.attr("dy"));
+            let tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+            let lineNumber = 0;
+            let line = [];
+            let isTruncated = false;
+
+            words.forEach((word, i) => {
+                line.push(word);
+                tspan.text(line.join(""));
+                if (tspan.node().getComputedTextLength() > nodeWidth(d) - 4) {
+                    if (lineNumber === 1) {
+                        line.pop();
+                        tspan.text(truncateText(line.join(""), line.join("").length - 3));
+                        isTruncated = true;
+                        return;
+                    }
+                    line.pop();
+                    tspan.text(line.join(""));
+                    line = [word];
+                    tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+                }
+            });
+
+            if (isTruncated) {
+                d3.select(this.parentNode)
+                    .on("mouseover", function(event, d) {
+                        tooltip.transition()
+                            .duration(200)
+                            .style("opacity", .9);
+                        tooltip.html(d.data.id)
+                            .style("left", (event.pageX + 10) + "px")
+                            .style("top", (event.pageY - 28) + "px");
+                    })
+                    .on("mouseout", function(d) {
+                        tooltip.transition()
+                            .duration(500)
+                            .style("opacity", 0);
+                    });
+            }
         });
+
+        // Adjust node positions to prevent overlapping
+        const simulation = d3.forceSimulation(treeData.descendants())
+            .force("collide", d3.forceCollide().radius(d => nodeWidth(d) / 2 + 10))
+            .force("x", d3.forceX(d => d.x).strength(1))
+            .force("y", d3.forceY(d => d.y).strength(1))
+            .stop();
+
+        for (let i = 0; i < 100; i++) {
+            simulation.tick();
+        }
+
+        // Update node positions
+        node.attr("transform", d => "translate(" + d.x + "," + d.y + ")");
+
+        // Update links
+        link.attr("d", d3.linkVertical()
+            .x(d => d.x)
+            .y(d => d.y));
 
         // Initial centering and scaling
         const rootNode = treeData.descendants()[0];
