@@ -198,6 +198,30 @@ func GenerateHTML(graph *Graph) string {
             border-radius: 4px;
             border: 2px solid rgba(0,0,0,0.1);
         }
+        #search-container {
+            position: fixed;
+            top: 140px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        #search-input {
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 200px;
+        }
+        #search-icon {
+            margin-left: 10px;
+            color: #6c757d;
+            font-size: 20px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -210,6 +234,10 @@ func GenerateHTML(graph *Graph) string {
             <div class="legend-color" style="background-color: #fff4e6; border-color: #ffa94d;"></div>
             <span>Unpicked dependency</span>
         </div>
+    </div>
+    <div id="search-container">
+        <input type="text" id="search-input" placeholder="Search dependency...">
+        <span id="search-icon">⏎</span>
     </div>
     <div id="graph-container"></div>
     <script>
