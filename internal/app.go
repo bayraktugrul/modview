@@ -222,6 +222,33 @@ func GenerateHTML(graph *Graph) string {
             font-size: 20px;
             cursor: pointer;
         }
+        #zoom-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .zoom-button {
+            padding: 10px 15px;
+            font-size: 18px;
+            background-color: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .zoom-button:hover {
+            background-color: #e9ecef;
+        }
+        .zoom-button:active {
+            background-color: #dee2e6;
+        }
+        #zoom-in {
+            border-right: 1px solid #dee2e6;
+        }
     </style>
 </head>
 <body>
@@ -240,6 +267,10 @@ func GenerateHTML(graph *Graph) string {
         <span id="search-icon">⏎</span>
     </div>
     <div id="graph-container"></div>
+    <div id="zoom-controls">
+        <button id="zoom-in" class="zoom-button">+</button>
+        <button id="zoom-out" class="zoom-button">-</button>
+    </div>
     <script>
         const data = {
             nodes: [
