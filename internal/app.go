@@ -266,10 +266,11 @@ func GenerateHTML(graph *Graph) string {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background-color: #28a745;
-            color: white;
+            background-color: rgba(0, 0, 139, 0); /* Changed to fully transparent */
+            color: #42A5F5; /* Updated text color to #42A5F5 */
             padding: 15px 25px;
             border-radius: 8px;
+            border: 2px solid #42A5F5; /* Updated border color to #42A5F5 */
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             font-size: 16px;
             opacity: 0;
