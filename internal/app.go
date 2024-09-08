@@ -249,6 +249,25 @@ func GenerateHTML(graph *Graph) string {
         #zoom-in {
             border-right: 1px solid #dee2e6;
         }
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #28a745;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            font-size: 16px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            z-index: 1000;
+        }
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body>
@@ -271,6 +290,7 @@ func GenerateHTML(graph *Graph) string {
         <button id="zoom-in" class="zoom-button">+</button>
         <button id="zoom-out" class="zoom-button">-</button>
     </div>
+    <div class="notification" id="notification">Copied!</div>
     <script>
         const data = {
             nodes: [
@@ -511,6 +531,14 @@ func GenerateHTML(graph *Graph) string {
             clearNodeAndRootHighlight();
             d3.select(this).classed("node-hover", false);
         }).on("click", function(event, d) {
+            const textToCopy = d.data.id;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const notification = document.getElementById("notification");
+                notification.classList.add("show");
+                setTimeout(() => {
+                    notification.classList.remove("show");
+                }, 1000); // Notification disappears after 1 second
+            });
             focusOnParentNode(d);
         });
 
