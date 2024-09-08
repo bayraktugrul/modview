@@ -340,12 +340,21 @@ func GenerateHTML(graph *Graph) string {
 
         // Create a zoom behavior
         const zoom = d3.zoom()
-            .scaleExtent([0.1, 2])
+            .scaleExtent([0.1, 4]) // Increased maximum zoom level
             .on("zoom", (event) => {
                 g.attr("transform", event.transform);
             });
 
         svg.call(zoom);
+
+        // Zoom in and out functionality
+        d3.select("#zoom-in").on("click", () => {
+            svg.transition().duration(200).call(zoom.scaleBy, 1.5); // Faster zoom in
+        });
+
+        d3.select("#zoom-out").on("click", () => {
+            svg.transition().duration(200).call(zoom.scaleBy, 0.5); // Faster zoom out
+        });
 
         const link = g.selectAll(".link")
             .data(treeData.links())
@@ -553,7 +562,7 @@ func GenerateHTML(graph *Graph) string {
                 const y = height / 2 - d.parent.x * scale;
 
                 svg.transition()
-                    .duration(750)
+                    .duration(200) // Faster transition
                     .call(
                         zoom.transform,
                         d3.zoomIdentity.translate(x, y).scale(scale)
