@@ -118,8 +118,8 @@ func GenerateHTML(graph *Graph) string {
             transition: all 0.3s ease;
         }
         .link {
-            stroke: #ced4da;
-            stroke-opacity: 0.6;
+            stroke: #6c757d; /* Changed to a darker gray */
+            stroke-opacity: 0.8; /* Increased opacity for better visibility */
             fill: none;
             marker-end: url(#arrowhead);
             transition: stroke 0.3s, stroke-width 0.3s;
@@ -176,15 +176,28 @@ func GenerateHTML(graph *Graph) string {
             stroke-width: 3px;
             filter: drop-shadow(0 0 5px rgba(34, 139, 230, 0.5));
         }
-        #legend {
+        #repo-info {
             position: fixed;
             top: 20px;
+            left: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            font-size: 14px;
+            color: #333;
+            z-index: 1000; /* Ensure it appears above other elements */
+        }
+        #legend {
+            position: fixed;
+            top: 70px; /* Adjusted to place it below repo info with 10px spacing */
             left: 20px;
             background-color: rgba(255, 255, 255, 0.95);
             padding: 15px;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             font-size: 14px;
+            margin-bottom: 10px; /* Adjusted margin for spacing */
         }
         .legend-item {
             display: flex;
@@ -200,7 +213,7 @@ func GenerateHTML(graph *Graph) string {
         }
         #search-container {
             position: fixed;
-            top: 140px;
+            top: 190px; /* Adjusted to place it below legend with an extra 10px spacing */
             left: 20px;
             display: flex;
             align-items: center;
@@ -271,6 +284,9 @@ func GenerateHTML(graph *Graph) string {
     </style>
 </head>
 <body>
+    <div id="repo-info">
+        <a href="https://github.com/bayraktugrul/modview" target="_blank" style="text-decoration: none; color: #007bff;">Repository: bayraktugrul/modview</a>
+    </div>
     <div id="legend">
         <div class="legend-item">
             <div class="legend-color" style="background-color: #e7f5ff; border-color: #1c7ed6;"></div>
