@@ -149,11 +149,11 @@ func GenerateHTML(graph *Graph) string {
             fill: #fff7e6;
         }
         .node-picked-highlight rect {
-            stroke: #0277BD;
+            stroke: #81D4FA;
             stroke-width: 3px;
         }
         .node-unpicked-highlight rect {
-            stroke: #546E7A;
+            stroke: #B0BEC5;
             stroke-width: 3px;
         }
         .node-hover rect {
@@ -286,9 +286,14 @@ func GenerateHTML(graph *Graph) string {
             .attr("transform", d => "translate(" + d.y + "," + d.x + ")");
 
         // Adjust font size and node size based on node count
-        const fontSize = nodeCount > 50 ? 6 : (nodeCount > 20 ? 8 : 10);
-        const nodeWidth = d => Math.max(Math.min(d.data.id.length * (fontSize * 0.6) + 10, 120), 60);
-        const nodeHeight = fontSize * 3;
+        const fontSize = nodeCount <= 15 ? 12 : (nodeCount > 50 ? 6 : (nodeCount > 20 ? 8 : 10));
+        const nodeWidth = d => {
+            if (nodeCount <= 15) {
+                return Math.max(...treeData.descendants().map(n => n.data.id.length * (fontSize * 0.6) + 20));
+            }
+            return Math.max(Math.min(d.data.id.length * (fontSize * 0.6) + 10, 120), 60);
+        };
+        const nodeHeight = nodeCount <= 15 ? fontSize * 4 : fontSize * 3;
 
         node.append("rect")
             .attr("width", d => nodeWidth(d))
@@ -364,6 +369,15 @@ func GenerateHTML(graph *Graph) string {
             }
         });
 
+        // Center text for root node
+        node.filter(d => d.data.id === data.root)
+            .select("text")
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "middle")
+            .selectAll("tspan")
+            .attr("x", 0)
+            .attr("dy", (d, i) => i ? "1.1em" : 0);
+
         // Adjust node positions to prevent overlapping
         const simulation = d3.forceSimulation(treeData.descendants())
             .force("collide", d3.forceCollide().radius(d => nodeWidth(d) / 2 + 10))
@@ -385,7 +399,7 @@ func GenerateHTML(graph *Graph) string {
 
         // Initial centering and scaling
         const rootNode = treeData.descendants()[0];
-        const scale = 0.8;
+        const scale = nodeCount <= 15 ? 0.9 : 0.8;
         const initialX = width / 2 - rootNode.y * scale;
         const initialY = height / 6;
         svg.call(zoom.transform, d3.zoomIdentity.translate(initialX, initialY).scale(scale));
