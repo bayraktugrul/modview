@@ -627,6 +627,34 @@ func GenerateHTML(graph *Graph) string {
             node.classed("node-picked-highlight", false);
             node.classed("node-unpicked-highlight", false);
         }
+
+        d3.select("#search-icon").on("click", () => {
+            const searchTerm = d3.select("#search-input").property("value").toLowerCase();
+            if (searchTerm) {
+                const matchedNode = treeData.descendants().find(node => node.data.id.toLowerCase().includes(searchTerm));
+                if (matchedNode) {
+                    const scale = 2; // Increased zoom level
+                    const x = width / 2 - matchedNode.y * scale;
+                    const y = height / 2 - matchedNode.x * scale;
+
+                    svg.transition()
+                        .duration(200) // Faster transition
+                        .call(
+                            zoom.transform,
+                            d3.zoomIdentity.translate(x, y).scale(scale)
+                        );
+
+                    // Highlight the matched node
+                    node.classed("node-highlighted", d => d === matchedNode);
+                }
+            }
+        });
+
+        d3.select("#search-input").on("keypress", (event) => {
+            if (event.key === "Enter") {
+                d3.select("#search-icon").dispatch("click");
+            }
+        });
     </script>
 </body>
 </html>
