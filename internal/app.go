@@ -160,9 +160,39 @@ func GenerateHTML(graph *Graph) string {
             stroke: #0288D1;
             stroke-width: 3px;
         }
+        #legend {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            border: 1px solid #000;
+        }
     </style>
 </head>
 <body>
+    <div id="legend">
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #B2EBF2;"></div>
+            <span>Picked dependency by MVS algorithm</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #CFD8DC;"></div>
+            <span>Unpicked dependency</span>
+        </div>
+    </div>
     <div id="graph-container"></div>
     <script>
         const data = {
