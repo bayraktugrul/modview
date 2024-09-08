@@ -100,96 +100,115 @@ func GenerateHTML(graph *Graph) string {
             padding: 0;
             width: 100%;
             height: 100%;
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #ffffff;
+            overflow: hidden;
         }
         #graph-container {
             width: 100%;
             height: 100%;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.8) 2px, transparent 2px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.8) 2px, transparent 2px),
+                linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
+            background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+            background-position: -2px -2px, -2px -2px, -1px -1px, -1px -1px;
+            background-color: #f0f4f8;
         }
         .node {
             cursor: pointer;
+            transition: all 0.3s ease;
         }
         .link {
-            stroke: #999;
+            stroke: #b0bec5;
             stroke-opacity: 0.6;
             fill: none;
             marker-end: url(#arrowhead);
             transition: stroke 0.3s, stroke-width 0.3s;
         }
         .node text {
-            fill: black;
+            fill: #37474f;
             text-anchor: middle;
             dominant-baseline: middle;
+            font-weight: 500;
         }
         .tooltip {
             position: absolute;
-            background-color: white;
-            border: 1px solid #ddd;
-            padding: 5px;
-            border-radius: 3px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 1px solid #e0e0e0;
+            padding: 10px;
+            border-radius: 4px;
             pointer-events: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-size: 14px;
+            transition: all 0.2s ease;
         }
         .highlighted {
-            stroke: #0288D1;
+            stroke: #1e88e5;
             stroke-width: 3px;
         }
         .node-highlighted rect {
-            stroke: #0288D1;
+            stroke: #1e88e5;
             stroke-width: 3px;
         }
         .link-highlighted {
-            stroke: #0288D1;
+            stroke: #1e88e5;
             stroke-width: 3px;
-            filter: drop-shadow(0 0 3px #0288D1);
+            filter: drop-shadow(0 0 3px #1e88e5);
         }
         .node-highlighted-text {
             font-weight: bold;
+            fill: #1e88e5;
         }
         .node-highlighted-bg {
-            fill: #fff7e6;
+            fill: #e3f2fd;
         }
         .node-picked-highlight rect {
-            stroke: #81D4FA;
+            stroke: #4caf50;
             stroke-width: 3px;
         }
         .node-unpicked-highlight rect {
-            stroke: #B0BEC5;
+            stroke: #ff9800;
             stroke-width: 3px;
         }
         .node-hover rect {
-            stroke: #0288D1;
+            stroke: #1e88e5;
             stroke-width: 3px;
+            filter: drop-shadow(0 0 5px rgba(30, 136, 229, 0.5));
         }
         #legend {
             position: fixed;
-            top: 10px;
-            left: 10px;
-            background-color: rgba(255, 255, 255, 0.8);
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            top: 20px;
+            left: 20px;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            font-size: 14px;
         }
         .legend-item {
             display: flex;
             align-items: center;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
         }
         .legend-color {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-            border: 1px solid #000;
+            width: 24px;
+            height: 24px;
+            margin-right: 12px;
+            border-radius: 4px;
+            border: 2px solid rgba(0,0,0,0.1);
         }
     </style>
 </head>
 <body>
     <div id="legend">
         <div class="legend-item">
-            <div class="legend-color" style="background-color: #B2EBF2;"></div>
+            <div class="legend-color" style="background-color: #e3f2fd;"></div>
             <span>Picked dependency by MVS algorithm</span>
         </div>
         <div class="legend-item">
-            <div class="legend-color" style="background-color: #CFD8DC;"></div>
+            <div class="legend-color" style="background-color: #fff3e0;"></div>
             <span>Unpicked dependency</span>
         </div>
     </div>
@@ -229,7 +248,7 @@ func GenerateHTML(graph *Graph) string {
             .attr("xoverflow", "visible")
             .append("svg:path")
             .attr("d", "M 0,-5 L 10 ,0 L 0,5")
-            .attr("fill", "#999")
+            .attr("fill", "#b0bec5")
             .style("stroke", "none");
 
         const g = svg.append("g");
@@ -300,14 +319,21 @@ func GenerateHTML(graph *Graph) string {
             .attr("height", nodeHeight)
             .attr("x", d => -nodeWidth(d) / 2)
             .attr("y", -nodeHeight / 2)
-            .attr("rx", 3)
-            .attr("ry", 3)
+            .attr("rx", 6)
+            .attr("ry", 6)
             .attr("fill", d => {
-                if (d.data.id === data.root) return "#00BCD4";
-                if (d.data.picked === true) return "#B2EBF2";
-                if (d.data.picked === false) return "#CFD8DC";
-                return "#ccc";
-            });
+                if (d.data.id === data.root) return "#bbdefb";
+                if (d.data.picked === true) return "#e3f2fd";
+                if (d.data.picked === false) return "#fff3e0";
+                return "#f5f5f5";
+            })
+            .attr("stroke", d => {
+                if (d.data.id === data.root) return "#1e88e5";
+                if (d.data.picked === true) return "#4caf50";
+                if (d.data.picked === false) return "#ff9800";
+                return "#bdbdbd";
+            })
+            .attr("stroke-width", 2);
 
         const nodeText = node.append("text")
             .attr("dy", "0.35em")
