@@ -101,42 +101,40 @@ func GenerateHTML(graph *Graph) string {
             width: 100%;
             height: 100%;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #ffffff;
+            background-color: #f8f9fa;
             overflow: hidden;
         }
         #graph-container {
             width: 100%;
             height: 100%;
             background-image: 
-                linear-gradient(rgba(255, 255, 255, 0.8) 2px, transparent 2px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.8) 2px, transparent 2px),
-                linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
-            background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
-            background-position: -2px -2px, -2px -2px, -1px -1px, -1px -1px;
-            background-color: #f0f4f8;
+                radial-gradient(#e9ecef 1px, transparent 1px),
+                radial-gradient(#e9ecef 1px, transparent 1px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
         }
         .node {
             cursor: pointer;
             transition: all 0.3s ease;
         }
         .link {
-            stroke: #b0bec5;
+            stroke: #ced4da;
             stroke-opacity: 0.6;
             fill: none;
             marker-end: url(#arrowhead);
             transition: stroke 0.3s, stroke-width 0.3s;
         }
         .node text {
-            fill: #37474f;
+            fill: #495057;
             text-anchor: middle;
             dominant-baseline: middle;
             font-weight: 500;
+            font-size: 12px;
         }
         .tooltip {
             position: absolute;
-            background-color: rgba(255, 255, 255, 0.9);
-            border: 1px solid #e0e0e0;
+            background-color: rgba(255, 255, 255, 0.95);
+            border: 1px solid #dee2e6;
             padding: 10px;
             border-radius: 4px;
             pointer-events: none;
@@ -145,37 +143,38 @@ func GenerateHTML(graph *Graph) string {
             transition: all 0.2s ease;
         }
         .highlighted {
-            stroke: #1e88e5;
+            stroke: #228be6;
             stroke-width: 3px;
         }
         .node-highlighted rect {
-            stroke: #1e88e5;
+            stroke: #228be6;
             stroke-width: 3px;
         }
         .link-highlighted {
-            stroke: #1e88e5;
-            stroke-width: 3px;
-            filter: drop-shadow(0 0 3px #1e88e5);
+            stroke: #228be6;
+            stroke-width: 4px;
+            filter: drop-shadow(0 0 3px #228be6);
         }
         .node-highlighted-text {
             font-weight: bold;
-            fill: #1e88e5;
+            fill: #228be6;
         }
         .node-highlighted-bg {
-            fill: #e3f2fd;
+            fill: #e7f5ff;
         }
         .node-picked-highlight rect {
-            stroke: #4caf50;
+            stroke: #1c7ed6;
             stroke-width: 3px;
+            filter: drop-shadow(0 0 5px rgba(28, 126, 214, 0.5));
         }
         .node-unpicked-highlight rect {
-            stroke: #ff9800;
-            stroke-width: 3px;
+            stroke: #ffa94d;
+            stroke-width: 2px;
         }
         .node-hover rect {
-            stroke: #1e88e5;
+            stroke: #228be6;
             stroke-width: 3px;
-            filter: drop-shadow(0 0 5px rgba(30, 136, 229, 0.5));
+            filter: drop-shadow(0 0 5px rgba(34, 139, 230, 0.5));
         }
         #legend {
             position: fixed;
@@ -204,11 +203,11 @@ func GenerateHTML(graph *Graph) string {
 <body>
     <div id="legend">
         <div class="legend-item">
-            <div class="legend-color" style="background-color: #e3f2fd;"></div>
+            <div class="legend-color" style="background-color: #e7f5ff; border-color: #1c7ed6;"></div>
             <span>Picked dependency by MVS algorithm</span>
         </div>
         <div class="legend-item">
-            <div class="legend-color" style="background-color: #fff3e0;"></div>
+            <div class="legend-color" style="background-color: #fff4e6; border-color: #ffa94d;"></div>
             <span>Unpicked dependency</span>
         </div>
     </div>
@@ -323,17 +322,21 @@ func GenerateHTML(graph *Graph) string {
             .attr("ry", 6)
             .attr("fill", d => {
                 if (d.data.id === data.root) return "#bbdefb";
-                if (d.data.picked === true) return "#e3f2fd";
-                if (d.data.picked === false) return "#fff3e0";
+                if (d.data.picked === true) return "#e7f5ff";
+                if (d.data.picked === false) return "#fff4e6";
                 return "#f5f5f5";
             })
             .attr("stroke", d => {
                 if (d.data.id === data.root) return "#1e88e5";
-                if (d.data.picked === true) return "#4caf50";
-                if (d.data.picked === false) return "#ff9800";
+                if (d.data.picked === true) return "#1c7ed6";
+                if (d.data.picked === false) return "#ffa94d";
                 return "#bdbdbd";
             })
-            .attr("stroke-width", 2);
+            .attr("stroke-width", d => {
+                if (d.data.picked === true) return 2.5;
+                if (d.data.picked === false) return 1.5;
+                return 2;
+            });
 
         const nodeText = node.append("text")
             .attr("dy", "0.35em")
