@@ -27,65 +27,63 @@ type Graph struct {
 func Convert(r io.Reader) (*Graph, error) {
 	scanner := bufio.NewScanner(r)
 	var g Graph
-	seen := map[string]bool{}
-	mvsPicked := map[string]string{}
+	seen := make(map[string]bool)
+	mvsPicked := make(map[string]string)
 
 	for scanner.Scan() {
-		l := scanner.Text()
-		if l == "" {
+		line := scanner.Text()
+		if line == "" {
 			continue
 		}
 
-		parts := strings.Fields(l)
+		parts := strings.Fields(line)
 		if len(parts) != 2 {
-			return nil, fmt.Errorf("expected 2 words in line, but got %d: %s", len(parts), l)
+			return nil, fmt.Errorf("expected 2 words in line, but got %d: %s", len(parts), line)
 		}
 
-		from := parts[0]
-		to := parts[1]
+		from, to := parts[0], parts[1]
 		g.Edges = append(g.Edges, Edge{From: from, To: to})
 
 		for _, node := range []string{from, to} {
-			if _, ok := seen[node]; ok {
+			if seen[node] {
 				continue
 			}
 			seen[node] = true
 
-			var m, v string
+			var module, version string
 			if i := strings.IndexByte(node, '@'); i >= 0 {
-				m, v = node[:i], node[i+1:]
+				module, version = node[:i], node[i+1:]
 			} else {
 				g.Root = node
 				continue
 			}
 
-			if maxV, ok := mvsPicked[m]; ok {
-				if semver.Compare(maxV, v) < 0 {
-					g.MvsUnpicked = append(g.MvsUnpicked, m+"@"+maxV)
-					mvsPicked[m] = v
+			if maxVersion, exists := mvsPicked[module]; exists {
+				if semver.Compare(maxVersion, version) < 0 {
+					g.MvsUnpicked = append(g.MvsUnpicked, module+"@"+maxVersion)
+					mvsPicked[module] = version
 				} else {
 					g.MvsUnpicked = append(g.MvsUnpicked, node)
 				}
 			} else {
-				mvsPicked[m] = v
+				mvsPicked[module] = version
 			}
 		}
 	}
+
 	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
 
-	for m, v := range mvsPicked {
-		g.MvsPicked = append(g.MvsPicked, m+"@"+v)
+	for module, version := range mvsPicked {
+		g.MvsPicked = append(g.MvsPicked, module+"@"+version)
 	}
 
 	sort.Strings(g.MvsPicked)
 	return &g, nil
 }
 
-// GenerateHTML generates an HTML representation of the graph using D3.js.
 func GenerateHTML(graph *Graph) string {
-	// Define the HTML template for the graph.
 	const tmpl = `
 <!DOCTYPE html>
 <html lang="en">
@@ -714,7 +712,6 @@ func GenerateHTML(graph *Graph) string {
 </body>
 </html>
 `
-	// Define the data to be passed to the template.
 	data := struct {
 		Nodes       []string
 		MvsPicked   []string
@@ -729,7 +726,6 @@ func GenerateHTML(graph *Graph) string {
 		Root:        graph.Root,
 	}
 
-	// Create a new template and parse the template string into it.
 	tmplObj, err := template.New("graph").Funcs(template.FuncMap{
 		"in": func(slice []string, item string) bool {
 			for _, v := range slice {
@@ -744,17 +740,14 @@ func GenerateHTML(graph *Graph) string {
 		panic(err)
 	}
 
-	// Execute the template and write the output to a buffer.
 	var buf bytes.Buffer
 	if err := tmplObj.Execute(&buf, data); err != nil {
 		panic(err)
 	}
 
-	// Return the generated HTML as a string.
 	return buf.String()
 }
 
-// getAllNodes returns a slice of all unique nodes in the graph
 func getAllNodes(graph *Graph) []string {
 	nodeSet := make(map[string]bool)
 	nodeSet[graph.Root] = true
