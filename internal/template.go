@@ -33,8 +33,8 @@ const (
             transition: all 0.3s ease;
         }
         .link {
-            stroke: #6c757d; /* Changed to a darker gray */
-            stroke-opacity: 0.8; /* Increased opacity for better visibility */
+            stroke: #6c757d;
+            stroke-opacity: 0.8;
             fill: none;
             transition: stroke 0.3s, stroke-width 0.3s;
         }
@@ -58,20 +58,20 @@ const (
         }
         .highlighted {
             stroke: #228be6;
-            stroke-width: 2px; /* Reduced stroke width */
+            stroke-width: 2px;
         }
         .node-highlighted rect {
             stroke: #228be6;
-            stroke-width: 2px; /* Reduced stroke width */
+            stroke-width: 2px;
         }
         .link-highlighted {
             stroke: #228be6;
-            stroke-width: 4px; /* Reduced stroke width */
+            stroke-width: 4px;
             filter: drop-shadow(0 0 3px #228be6);
         }
         .link-unpicked-highlighted {
             stroke: #ffa94d;
-            stroke-width: 4px; /* Reduced stroke width */
+            stroke-width: 4px;
             filter: drop-shadow(0 0 3px #ffa94d);
         }
         .node-highlighted-text {
@@ -83,21 +83,21 @@ const (
         }
         .node-picked-highlight rect {
             stroke: #1c7ed6;
-            stroke-width: 2px; /* Reduced stroke width */
+            stroke-width: 2px;
             filter: drop-shadow(0 0 5px rgba(28, 126, 214, 0.5));
         }
         .node-unpicked-highlight rect {
             stroke: #ffa94d;
-            stroke-width: 1.5px; /* Reduced stroke width */
+            stroke-width: 1.5px;
         }
         .node-hover rect {
             stroke: #228be6;
-            stroke-width: 2px; /* Reduced stroke width */
+            stroke-width: 2px;
             filter: drop-shadow(0 0 5px rgba(34, 139, 230, 0.5));
         }
         .node-unpicked-hover rect {
             stroke: #ffa94d;
-            stroke-width: 2px; /* Reduced stroke width */
+            stroke-width: 2px;
             filter: drop-shadow(0 0 5px rgba(255, 169, 77, 0.5));
         }
         #repo-info {
@@ -110,18 +110,18 @@ const (
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             font-size: 14px;
             color: #333;
-            z-index: 1000; /* Ensure it appears above other elements */
+            z-index: 1000;
         }
         #legend {
             position: fixed;
-            top: 70px; /* Adjusted to place it below repo info with 10px spacing */
+            top: 70px;
             left: 20px;
             background-color: rgba(255, 255, 255, 0.95);
             padding: 15px;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             font-size: 14px;
-            margin-bottom: 10px; /* Adjusted margin for spacing */
+            margin-bottom: 10px;
         }
         .legend-item {
             display: flex;
@@ -137,7 +137,7 @@ const (
         }
         #search-container {
             position: fixed;
-            top: 190px; /* Adjusted to place it below legend with an extra 10px spacing */
+            top: 190px;
             left: 20px;
             display: flex;
             align-items: center;
@@ -161,7 +161,7 @@ const (
         }
         #search-results {
             position: fixed;
-            top: 230px; /* Adjusted to place it below search container */
+            top: 230px;
             left: 20px;
             background-color: rgba(255, 255, 255, 0.95);
             padding: 10px;
@@ -169,7 +169,7 @@ const (
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             font-size: 14px;
             color: #333;
-            display: none; /* Initially hidden */
+            display: none;
         }
         #zoom-controls {
             position: fixed;
@@ -202,11 +202,11 @@ const (
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background-color: rgba(0, 0, 139, 0); /* Changed to fully transparent */
-            color: #42A5F5; /* Updated text color to #42A5F5 */
+            background-color: rgba(0, 0, 139, 0);
+            color: #42A5F5;
             padding: 15px 25px;
             border-radius: 8px;
-            border: 2px solid #42A5F5; /* Updated border color to #42A5F5 */
+            border: 2px solid #42A5F5;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             font-size: 16px;
             opacity: 0;
@@ -270,7 +270,6 @@ const (
 
         const g = svg.append("g");
 
-        // Create a hierarchical layout
         const hierarchy = d3.stratify()
             .id(d => d.id)
             .parentId(d => {
@@ -278,41 +277,35 @@ const (
                 return parent ? parent.source : null;
             })(data.nodes);
 
-        // Calculate the number of nodes and adjust the layout size
         const nodeCount = data.nodes.length;
         const dynamicWidth = Math.max(width, nodeCount * 80);
         const dynamicHeight = Math.max(height, nodeCount * 40);
 
         const treeLayout = d3.tree()
             .size([dynamicWidth - 200, dynamicHeight - 200])
-            .separation((a, b) => {
-                return (a.parent == b.parent ? 1 : 2) / (nodeCount > 50 ? 2 : 1);
-            });
+            .separation((a, b) => (a.parent == b.parent ? 1 : 2) / (nodeCount > 50 ? 2 : 1));
 
         const treeData = treeLayout(hierarchy);
 
-        // Adjust y-coordinates to start from top and ensure minimum vertical spacing
         const minVerticalSpacing = nodeCount > 50 ? 30 : 50;
         treeData.each(d => {
             d.y = height / 6 + d.depth * Math.max(80, minVerticalSpacing);
         });
 
-        // Create a zoom behavior
         const zoom = d3.zoom()
-            .scaleExtent([0.1, 4]) // Increased maximum zoom level
+            .scaleExtent([0.1, 4])
             .on("zoom", (event) => {
                 g.attr("transform", event.transform);
             });
 
         svg.call(zoom);
 
-        // Zoom in and out functionality
         d3.select("#zoom-in").on("click", () => {
-            svg.transition().duration(200).call(zoom.scaleBy, 1.5); // Faster zoom in
+            svg.transition().duration(200).call(zoom.scaleBy, 1.5);
         });
 
         d3.select("#zoom-out").on("click", () => {
-            svg.transition().duration(200).call(zoom.scaleBy, 0.5); // Faster zoom out
+            svg.transition().duration(200).call(zoom.scaleBy, 0.5);
         });
 
         const link = g.selectAll(".link")
@@ -330,7 +323,6 @@ const (
             .attr("class", "node")
             .attr("transform", d => "translate(" + d.y + "," + d.x + ")");
 
-        // Adjust font size and node size based on node count
         const fontSize = nodeCount <= 15 ? 12 : (nodeCount > 50 ? 6 : (nodeCount > 20 ? 8 : 10));
         const nodeWidth = d => {
             if (nodeCount <= 15) {
@@ -371,12 +363,10 @@ const (
             .attr("text-anchor", "middle")
             .attr("dominant-baseline", "middle");
 
-        // Function to truncate text
         function truncateText(text, maxLength) {
             return text.length > maxLength ? text.slice(0, maxLength - 3) + "..." : text;
         }
 
-        // Create tooltip
         const tooltip = d3.select("body").append("div")
             .attr("class", "tooltip")
             .style("opacity", 0);
@@ -427,7 +417,6 @@ const (
             }
         });
 
-        // Center text for root node
         node.filter(d => d.data.id === data.root)
             .select("text")
             .attr("text-anchor", "middle")
@@ -436,7 +425,6 @@ const (
             .attr("x", 0)
             .attr("dy", (d, i) => i ? "1.1em" : 0);
 
-        // Adjust node positions to prevent overlapping
         const simulation = d3.forceSimulation(treeData.descendants())
             .force("collide", d3.forceCollide().radius(d => nodeWidth(d) / 2 + 10))
             .force("x", d3.forceX(d => d.y).strength(1))
@@ -447,22 +435,18 @@ const (
             simulation.tick();
         }
 
-        // Update node positions
         node.attr("transform", d => "translate(" + d.y + "," + d.x + ")");
 
-        // Update links
         link.attr("d", d3.linkHorizontal()
             .x(d => d.y)
             .y(d => d.x));
 
-        // Initial centering and scaling
         const rootNode = treeData.descendants()[0];
         const scale = nodeCount <= 15 ? 0.9 : 0.8;
         const initialX = width / 2 - rootNode.y * scale;
         const initialY = height / 6;
         svg.call(zoom.transform, d3.zoomIdentity.translate(initialX, initialY).scale(scale));
 
-        // Highlight path to root on mouseover
         node.on("mouseover", function(event, d) {
             highlightPathToRoot(d);
             highlightNodeAndRoot(d);
@@ -483,12 +467,11 @@ const (
                 notification.classList.add("show");
                 setTimeout(() => {
                     notification.classList.remove("show");
-                }, 1000); // Notification disappears after 1 second
+                }, 1000);
             });
             focusOnParentNode(d);
         });
 
-        // Highlight edges on mouseover
         link.on("mouseover", function(event, d) {
             if (d.target.data.picked === false) {
                 d3.select(this).classed("link-unpicked-highlighted", true);
@@ -508,7 +491,7 @@ const (
                 d3.select(current.node).select("rect").classed("highlighted", true);
                 if (current.parent) {
                     const linkToParent = link.filter(l => l.target === current && l.source === current.parent);
-                    linkToParent.classed("highlighted", true).style("stroke-width", "4px"); // Reduced stroke width
+                    linkToParent.classed("highlighted", true).style("stroke-width", "4px");
                 }
                 current = current.parent;
             }
@@ -516,7 +499,7 @@ const (
 
         function clearHighlight() {
             node.select("rect").classed("highlighted", false);
-            link.classed("highlighted", false).style("stroke-width", null); // Reset stroke width
+            link.classed("highlighted", false).style("stroke-width", null);
         }
 
         function highlightConnectedNodes(d) {
@@ -536,12 +519,12 @@ const (
 
         function focusOnParentNode(d) {
             if (d.parent) {
-                const scale = 2; // Increased zoom level
+                const scale = 2;
                 const x = width / 2 - d.parent.y * scale;
                 const y = height / 2 - d.parent.x * scale;
 
                 svg.transition()
-                    .duration(200) // Faster transition
+                    .duration(200)
                     .call(
                         zoom.transform,
                         d3.zoomIdentity.translate(x, y).scale(scale)
@@ -579,18 +562,17 @@ const (
         function focusOnSearchResult() {
             const matchedNode = searchResults[currentSearchIndex];
             if (matchedNode) {
-                const scale = 2; // Increased zoom level
+                const scale = 2;
                 const x = width / 2 - matchedNode.y * scale;
                 const y = height / 2 - matchedNode.x * scale;
 
                 svg.transition()
-                    .duration(200) // Faster transition
+                    .duration(200)
                     .call(
                         zoom.transform,
                         d3.zoomIdentity.translate(x, y).scale(scale)
                     );
 
-                // Highlight the matched node
                 node.classed("node-highlighted", d => d === matchedNode);
             }
         }
