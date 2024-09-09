@@ -458,7 +458,9 @@ func GenerateHTML(graph *Graph) string {
 
         const nodeText = node.append("text")
             .attr("dy", "0.35em")
-            .style("font-size", fontSize + "px");
+            .style("font-size", fontSize + "px")
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "middle");
 
         // Function to truncate text
         function truncateText(text, maxLength) {
