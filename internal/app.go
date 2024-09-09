@@ -235,6 +235,18 @@ func GenerateHTML(graph *Graph) string {
             font-size: 20px;
             cursor: pointer;
         }
+        #search-results {
+            position: fixed;
+            top: 230px; /* Adjusted to place it below search container */
+            left: 20px;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            font-size: 14px;
+            color: #333;
+            display: none; /* Initially hidden */
+        }
         #zoom-controls {
             position: fixed;
             bottom: 20px;
@@ -302,6 +314,7 @@ func GenerateHTML(graph *Graph) string {
         <input type="text" id="search-input" placeholder="Search dependency...">
         <span id="search-icon">⏎</span>
     </div>
+    <div id="search-results"></div>
     <div id="graph-container"></div>
     <div id="zoom-controls">
         <button id="zoom-in" class="zoom-button">+</button>
@@ -636,6 +649,9 @@ func GenerateHTML(graph *Graph) string {
             currentSearchIndex = 0;
             if (searchResults.length > 0) {
                 focusOnSearchResult();
+                displaySearchResultsCount(searchResults.length);
+            } else {
+                hideSearchResultsCount();
             }
         }
 
@@ -658,10 +674,23 @@ func GenerateHTML(graph *Graph) string {
             }
         }
 
+        function displaySearchResultsCount(count) {
+            const searchResultsDiv = d3.select("#search-results");
+            searchResultsDiv.style("display", "block");
+            searchResultsDiv.html("Found " + count + " node" + (count > 1 ? "s" : ""));
+        }
+
+        function hideSearchResultsCount() {
+            const searchResultsDiv = d3.select("#search-results");
+            searchResultsDiv.style("display", "none");
+        }
+
         d3.select("#search-icon").on("click", () => {
             const searchTerm = d3.select("#search-input").property("value").toLowerCase();
             if (searchTerm) {
                 searchNodes(searchTerm);
+            } else {
+                hideSearchResultsCount();
             }
         });
 
