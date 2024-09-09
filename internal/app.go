@@ -121,7 +121,6 @@ func GenerateHTML(graph *Graph) string {
             stroke: #6c757d; /* Changed to a darker gray */
             stroke-opacity: 0.8; /* Increased opacity for better visibility */
             fill: none;
-            marker-end: url(#arrowhead);
             transition: stroke 0.3s, stroke-width 0.3s;
         }
         .node text {
@@ -144,16 +143,21 @@ func GenerateHTML(graph *Graph) string {
         }
         .highlighted {
             stroke: #228be6;
-            stroke-width: 3px;
+            stroke-width: 2px; /* Reduced stroke width */
         }
         .node-highlighted rect {
             stroke: #228be6;
-            stroke-width: 3px;
+            stroke-width: 2px; /* Reduced stroke width */
         }
         .link-highlighted {
             stroke: #228be6;
-            stroke-width: 4px;
+            stroke-width: 4px; /* Reduced stroke width */
             filter: drop-shadow(0 0 3px #228be6);
+        }
+        .link-unpicked-highlighted {
+            stroke: #ffa94d;
+            stroke-width: 4px; /* Reduced stroke width */
+            filter: drop-shadow(0 0 3px #ffa94d);
         }
         .node-highlighted-text {
             font-weight: bold;
@@ -164,21 +168,21 @@ func GenerateHTML(graph *Graph) string {
         }
         .node-picked-highlight rect {
             stroke: #1c7ed6;
-            stroke-width: 3px;
+            stroke-width: 2px; /* Reduced stroke width */
             filter: drop-shadow(0 0 5px rgba(28, 126, 214, 0.5));
         }
         .node-unpicked-highlight rect {
             stroke: #ffa94d;
-            stroke-width: 2px;
+            stroke-width: 1.5px; /* Reduced stroke width */
         }
         .node-hover rect {
             stroke: #228be6;
-            stroke-width: 3px;
+            stroke-width: 2px; /* Reduced stroke width */
             filter: drop-shadow(0 0 5px rgba(34, 139, 230, 0.5));
         }
         .node-unpicked-hover rect {
             stroke: #ffa94d;
-            stroke-width: 3px;
+            stroke-width: 2px; /* Reduced stroke width */
             filter: drop-shadow(0 0 5px rgba(255, 169, 77, 0.5));
         }
         #repo-info {
@@ -349,21 +353,6 @@ func GenerateHTML(graph *Graph) string {
             .attr("width", width)
             .attr("height", height);
 
-        // Define arrowhead marker
-        svg.append("defs").append("marker")
-            .attr("id", "arrowhead")
-            .attr("viewBox", "0 -5 10 10")
-            .attr("refX", 15)
-            .attr("refY", 0)
-            .attr("orient", "auto")
-            .attr("markerWidth", 8)
-            .attr("markerHeight", 8)
-            .attr("xoverflow", "visible")
-            .append("svg:path")
-            .attr("d", "M 0,-5 L 10 ,0 L 0,5")
-            .attr("fill", "#b0bec5")
-            .style("stroke", "none");
-
         const g = svg.append("g");
 
         // Create a hierarchical layout
@@ -456,7 +445,7 @@ func GenerateHTML(graph *Graph) string {
                 return "#bdbdbd";
             })
             .attr("stroke-width", d => {
-                if (d.data.picked === true) return 2.5;
+                if (d.data.picked === true) return 2;
                 if (d.data.picked === false) return 1.5;
                 return 2;
             });
@@ -586,10 +575,15 @@ func GenerateHTML(graph *Graph) string {
 
         // Highlight edges on mouseover
         link.on("mouseover", function(event, d) {
-            d3.select(this).classed("link-highlighted", true);
+            if (d.target.data.picked === false) {
+                d3.select(this).classed("link-unpicked-highlighted", true);
+            } else {
+                d3.select(this).classed("link-highlighted", true);
+            }
             highlightConnectedNodes(d);
         }).on("mouseout", function() {
             d3.select(this).classed("link-highlighted", false);
+            d3.select(this).classed("link-unpicked-highlighted", false);
             clearNodeHighlight();
         });
 
@@ -599,7 +593,7 @@ func GenerateHTML(graph *Graph) string {
                 d3.select(current.node).select("rect").classed("highlighted", true);
                 if (current.parent) {
                     const linkToParent = link.filter(l => l.target === current && l.source === current.parent);
-                    linkToParent.classed("highlighted", true);
+                    linkToParent.classed("highlighted", true).style("stroke-width", "4px"); // Reduced stroke width
                 }
                 current = current.parent;
             }
@@ -607,7 +601,7 @@ func GenerateHTML(graph *Graph) string {
 
         function clearHighlight() {
             node.select("rect").classed("highlighted", false);
-            link.classed("highlighted", false);
+            link.classed("highlighted", false).style("stroke-width", null); // Reset stroke width
         }
 
         function highlightConnectedNodes(d) {
