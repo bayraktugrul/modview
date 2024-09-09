@@ -176,6 +176,11 @@ func GenerateHTML(graph *Graph) string {
             stroke-width: 3px;
             filter: drop-shadow(0 0 5px rgba(34, 139, 230, 0.5));
         }
+        .node-unpicked-hover rect {
+            stroke: #ffa94d;
+            stroke-width: 3px;
+            filter: drop-shadow(0 0 5px rgba(255, 169, 77, 0.5));
+        }
         #repo-info {
             position: fixed;
             top: 20px;
@@ -557,11 +562,16 @@ func GenerateHTML(graph *Graph) string {
         node.on("mouseover", function(event, d) {
             highlightPathToRoot(d);
             highlightNodeAndRoot(d);
-            d3.select(this).classed("node-hover", true);
+            if (d.data.picked === false) {
+                d3.select(this).classed("node-unpicked-hover", true);
+            } else {
+                d3.select(this).classed("node-hover", true);
+            }
         }).on("mouseout", function() {
             clearHighlight();
             clearNodeAndRootHighlight();
             d3.select(this).classed("node-hover", false);
+            d3.select(this).classed("node-unpicked-hover", false);
         }).on("click", function(event, d) {
             const textToCopy = d.data.id;
             navigator.clipboard.writeText(textToCopy).then(() => {
