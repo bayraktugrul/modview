@@ -328,7 +328,7 @@ const (
             if (nodeCount <= 15) {
                 return Math.max(...treeData.descendants().map(n => n.data.id.length * (fontSize * 0.6) + 20));
             }
-            return Math.max(Math.min(d.data.id.length * (fontSize * 0.6) + 10, 120), 60);
+            return Math.max(Math.min(d.data.id.length * (fontSize * 0.6) + 20, 150), 80);
         };
         const nodeHeight = nodeCount <= 15 ? fontSize * 4 : fontSize * 3;
 
