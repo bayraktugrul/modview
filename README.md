@@ -4,11 +4,11 @@
 /_/  /_/\___/\_,_/|___/_/\__/|__,__/
 </code></pre>
 
-![Modview Example Image](modview.png)
-
-Transform your Go project's dependency graph into a dynamic, interactive visualization with modview. 
-This powerful tool takes the complexity out of your module graph, offering a clear and explorable view of your 
+Transform your Go project's dependency graph into a dynamic, interactive visualization with modview.
+This powerful tool takes the complexity out of your module graph, offering a clear and explorable view of your
 project's dependencies.
+
+![Modview Example Image](modview.png)
 
 `modview` leverages the output of go mod graph to create a browser-based visualization, 
 enabling you to navigate, search, and understand your dependency structure effortlessly. 
@@ -41,12 +41,12 @@ Navigate to your Go project's root directory and run:
 ```
 modview
 ```
-
 This will generate a file named `dependency_tree.html` in the current directory. Open this file in a web browser to view
 your module's dependency graph.
 
-## Contributing
+![Modview Showcase](modview-showcase.gif)
 
+## Contributing
 Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
