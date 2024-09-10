@@ -1,21 +1,24 @@
 # modview
 
-Illuminate your Go project's dependency landscape with modview – a powerful,
-interactive visualization tool that transforms the complexity of your module graph into an intuitive,
-explorable universe.
+Transform your Go project's dependency graph into a dynamic, interactive visualization with modview. 
+This powerful tool takes the complexity out of your module graph, offering a clear and explorable view of your 
+project's dependencies.
 
-modview takes the output of `go mod graph` and weaves it into a dynamic,
-browser-based visualization, allowing you to navigate, search, and understand your project's
-dependency structure with unprecedented ease. Whether you're optimizing your codebase,
-tracking down version conflicts, or simply exploring the ecosystem your project inhabits,
-modview provides the map you need to confidently traverse your Go module's dependency terrain.
+`modview` leverages the output of go mod graph to create a browser-based visualization, 
+enabling you to navigate, search, and understand your dependency structure effortlessly. 
+Whether you're optimizing your codebase, resolving version conflicts, or exploring the ecosystem 
+surrounding your project, modview is your guide through the intricate web of Go modules.
 
 ## Features
 
-- Generates an interactive HTML visualization of your Go module dependencies
-- Distinguishes between picked and unpicked dependencies by the Minimal Version Selection (MVS) algorithm
-- Allows zooming and panning for easy navigation of large dependency graphs
-- Provides a search functionality to quickly find specific dependencies
+**Interactive HTML Visualization:** Generate a dynamic, browser-friendly graph of your Go module dependencies.
+
+**Dependency Highlighting:** Easily distinguish between picked and unpicked dependencies, as determined 
+by the `Minimal Version Selection (MVS)` algorithm.
+
+**Intuitive Navigation:** Zoom, pan, and explore large dependency graphs with ease.
+
+**Search Functionality:** Quickly locate specific dependencies within your graph.
 
 ## Installation
 
@@ -23,25 +26,18 @@ To install modview, use the following command:
 
 ```bash
 go install github.com/bayraktugrul/modview@latest
-
+```
 Ensure that your Go bin directory is in your system's PATH.
 
 ## Usage
 
 Navigate to your Go project's root directory and run:
+```
 modview
 ```
 
 This will generate a file named `dependency_tree.html` in the current directory. Open this file in a web browser to view
 your module's dependency graph.
-
-## Visualization Features
-
-- **Zoom Controls**: Use the '+' and '-' buttons in the bottom-left corner or mouse wheel to zoom in and out.
-- **Pan**: Click and drag the graph to pan around.
-- **Search**: Use the search box in the top-left corner to find specific dependencies.
-- **Tooltips**: Hover over truncated dependency names to see the full name.
-- **Copy**: Click on a dependency node to copy its full name to the clipboard.
 
 ## Contributing
 
