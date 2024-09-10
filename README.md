@@ -44,7 +44,7 @@ modview
 This will generate a file named `dependency_tree.html` in the current directory. Open this file in a web browser to view
 your module's dependency graph.
 
-![Modview Showcase](modview-showcase.gif)
+<img src="modview-showcase.gif" alt="modview go mod graph dependency tree" style="width: 100%; max-width: 100%;" />
 
 ## Contributing
 Contributions are welcome! Please feel free to submit a Pull Request.
