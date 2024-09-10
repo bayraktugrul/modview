@@ -1,4 +1,10 @@
-# modview
+<pre><code>   __  ___        __     _           
+  /  |/  /__  ___/ /  __(_)__ _    __
+ / /|_/ / _ \/ _  / |/ / / -_) |/|/ /
+/_/  /_/\___/\_,_/|___/_/\__/|__,__/
+</code></pre>
+
+![Modview Example Image](modview.png)
 
 Transform your Go project's dependency graph into a dynamic, interactive visualization with modview. 
 This powerful tool takes the complexity out of your module graph, offering a clear and explorable view of your 
