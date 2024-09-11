@@ -10,7 +10,7 @@ project's dependencies.
 
 ![Modview Example Image](modview.png)
 
-`modview` leverages the output of go mod graph to create a browser-based visualization, 
+`modview` leverages the output of `go mod graph` to create a browser-based visualization, 
 enabling you to navigate, search, and understand your dependency structure effortlessly. 
 Whether you're optimizing your codebase, resolving version conflicts, or exploring the ecosystem 
 surrounding your project, modview is your guide through the intricate web of Go modules.
@@ -44,7 +44,7 @@ modview
 This will generate a file named `dependency_tree.html` in the current directory. Open this file in a web browser to view
 your module's dependency graph.
 
-<img src="modview-showcase.gif" alt="modview go mod graph dependency tree" style="width: 100%; max-width: 100%;" />
+<img src="modview-opt.gif" alt="modview go mod graph dependency tree" style="width: 100%; max-width: 100%;" />
 
 ## Contributing
 Contributions are welcome! Please feel free to submit a Pull Request.

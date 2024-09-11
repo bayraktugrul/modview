@@ -1,3 +1,5 @@
+// Reference: https://github.com/golang/exp/tree/master/cmd/modgraphviz
+
 package internal
 
 import (
