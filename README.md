@@ -28,12 +28,21 @@ by the `Minimal Version Selection (MVS)` algorithm.
 
 ## Installation
 
+### Option 1
 To install modview, use the following command:
 
 ```bash
 go install github.com/bayraktugrul/modview@latest
 ```
 Ensure that your Go bin directory is in your system's PATH.
+
+### Option 2
+
+```bash
+git clone https://github.com/bayraktugrul/modview.git
+cd modview
+go install
+```
 
 ## Usage
 
