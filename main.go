@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"os"
 	"os/exec"
 	"strings"
@@ -38,19 +39,40 @@ func main() {
 
 	color.Green("✅ Graph data converted successfully.")
 
-	htmlContent := internal.GenerateHTML(result)
+	htmlContent, err := internal.GenerateHTML(result)
 	if err != nil {
 		color.Red("❌ Error generating HTML: %v", err)
 		return
 	}
-
 	color.Green("✅ HTML content generated successfully.")
 
-	if err := os.WriteFile("dependency_tree.html", []byte(htmlContent), 0644); err != nil {
-		color.Red("❌ Error writing HTML file: %v", err)
+	openInBrowser := flag.Bool("open", false, "Open the temporary file in the default browser")
+	flag.Parse()
+
+	if openInBrowser != nil && *openInBrowser {
+		color.Green("🔍 Opening HTML content in the default browser...")
+		tempFile, err := os.CreateTemp("", "dependency_tree_*.html")
+		if err != nil {
+			color.Red("❌ Error creating temporary file: %v", err)
+			return
+		}
+		if _, err := tempFile.Write([]byte(htmlContent)); err != nil {
+			color.Red("❌ Error writing to temporary file: %v", err)
+			return
+		}
+		if err := internal.OpenInBrowser(tempFile.Name()); err != nil {
+			color.Red("❌ Error opening HTML content in the browser: %v", err)
+			return
+		}
+		color.Green("✅ HTML content opened in the default browser.")
 		return
+	} else {
+		if err := os.WriteFile("dependency_tree.html", []byte(htmlContent), 0644); err != nil {
+			color.Red("❌ Error writing HTML file: %v", err)
+			return
+		}
+		color.Green("✅ HTML file 'dependency_tree.html' written successfully.")
 	}
 
-	color.Green("✅ HTML file 'dependency_tree.html' written successfully.")
 	color.Cyan("🎉 modview completed successfully.")
 }
