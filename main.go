@@ -38,7 +38,7 @@ func main() {
 
 	color.Green("✅ Graph data converted successfully.")
 
-	htmlContent := internal.GenerateHTML(result)
+	htmlContent, err := internal.GenerateHTML(result)
 	if err != nil {
 		color.Red("❌ Error generating HTML: %v", err)
 		return

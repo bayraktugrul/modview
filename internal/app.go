@@ -85,7 +85,7 @@ func Convert(r io.Reader) (*Graph, error) {
 	return &g, nil
 }
 
-func GenerateHTML(graph *Graph) string {
+func GenerateHTML(graph *Graph) (string, error) {
 	data := struct {
 		Nodes       []string
 		MvsPicked   []string
@@ -111,7 +111,7 @@ func GenerateHTML(graph *Graph) string {
 		},
 	}).Parse(Template)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	var buf bytes.Buffer
@@ -119,7 +119,7 @@ func GenerateHTML(graph *Graph) string {
 		panic(err)
 	}
 
-	return buf.String()
+	return buf.String(), nil
 }
 
 func getAllNodes(graph *Graph) []string {
