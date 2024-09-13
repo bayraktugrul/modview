@@ -26,6 +26,8 @@ by the `Minimal Version Selection (MVS)` algorithm.
 
 **Search Functionality:** Quickly locate specific dependencies within your graph.
 
+**Dark Mode Support:** Seamlessly switch between light and dark themes for a comfortable viewing experience, especially during late-night coding sessions.
+
 ## Installation
 
 ### Option 1
