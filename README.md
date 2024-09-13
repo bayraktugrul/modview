@@ -55,6 +55,11 @@ your module's dependency graph.
 
 <img src="modview-opt.gif" alt="modview go mod graph dependency tree" style="width: 100%; max-width: 100%;" />
 
+To automatically open the dependency graph in your default web browser, use the `--open` flag:
+```
+modview --open
+```
+
 ## Contributing
 Contributions are welcome! Please feel free to submit a Pull Request.
 
