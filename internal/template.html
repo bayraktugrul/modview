@@ -14,6 +14,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f8f9fa;
             overflow: hidden;
+            transition: background-color 0.3s ease;
         }
         #graph-container {
             width: 100%;
@@ -23,6 +24,7 @@
                     radial-gradient(#e9ecef 1px, transparent 1px);
             background-size: 20px 20px;
             background-position: 0 0, 10px 10px;
+            transition: background-image 0.3s ease;
         }
         .node {
             cursor: pointer;
@@ -40,6 +42,7 @@
             dominant-baseline: middle;
             font-weight: 500;
             font-size: 12px;
+            transition: fill 0.3s ease;
         }
         .tooltip {
             position: absolute;
@@ -107,6 +110,7 @@
             font-size: 14px;
             color: #333;
             z-index: 1000;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
         #legend {
             position: fixed;
@@ -118,6 +122,7 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             font-size: 14px;
             margin-bottom: 10px;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
         .legend-item {
             display: flex;
@@ -141,6 +146,7 @@
             padding: 10px;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: background-color 0.3s ease;
         }
         #search-input {
             padding: 8px;
@@ -148,12 +154,14 @@
             border-radius: 4px;
             font-size: 14px;
             width: 200px;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
         #search-icon {
             margin-left: 10px;
             color: #6c757d;
             font-size: 20px;
             cursor: pointer;
+            transition: color 0.3s ease;
         }
         #search-results {
             position: fixed;
@@ -166,6 +174,7 @@
             font-size: 14px;
             color: #333;
             display: none;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
         #zoom-controls {
             position: fixed;
@@ -176,6 +185,7 @@
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             overflow: hidden;
+            transition: background-color 0.3s ease;
         }
         .zoom-button {
             padding: 10px 15px;
@@ -207,12 +217,84 @@
             font-size: 16px;
             opacity: 0;
             transform: translateY(20px);
-            transition: opacity 0.5s ease, transform 0.5s ease;
+            transition: opacity 0.5s ease, transform 0.5s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
             z-index: 1000;
         }
         .notification.show {
             opacity: 1;
             transform: translateY(0);
+        }
+        #dark-mode-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #f8f9fa;
+        }
+        body.dark-mode #graph-container {
+            background-image:
+                radial-gradient(#333 1px, transparent 1px),
+                radial-gradient(#333 1px, transparent 1px);
+        }
+        body.dark-mode .node text {
+            fill: #e9ecef;
+        }
+        body.dark-mode .tooltip {
+            background-color: rgba(40, 40, 40, 0.95);
+            border-color: #4a4a4a;
+            color: #f8f9fa;
+        }
+        body.dark-mode #repo-info,
+        body.dark-mode #legend,
+        body.dark-mode #search-container,
+        body.dark-mode #search-results,
+        body.dark-mode #zoom-controls {
+            background-color: rgba(40, 40, 40, 0.95);
+            color: #f8f9fa;
+        }
+        body.dark-mode #search-input {
+            background-color: #333;
+            color: #f8f9fa;
+            border-color: #4a4a4a;
+        }
+        body.dark-mode #search-icon {
+            color: #adb5bd;
+        }
+        body.dark-mode .zoom-button {
+            background-color: #333;
+            color: #f8f9fa;
+        }
+        body.dark-mode .zoom-button:hover {
+            background-color: #4a4a4a;
+        }
+        body.dark-mode .zoom-button:active {
+            background-color: #5a5a5a;
+        }
+        body.dark-mode #dark-mode-toggle {
+            background-color: #333;
+            color: #f8f9fa;
+        }
+        body.dark-mode .node rect {
+            fill: #2c2c2c;
+        }
+        body.dark-mode .node.picked rect {
+            fill: #3e3e3e;
+        }
+        body.dark-mode .node.unpicked rect {
+            fill: #4a4a4a;
+        }
+        body.dark-mode .link {
+            stroke: #adb5bd;
         }
     </style>
 </head>
@@ -241,6 +323,7 @@
     <button id="zoom-out" class="zoom-button">-</button>
 </div>
 <div class="notification" id="notification">Copied!</div>
+<button id="dark-mode-toggle">Dark Mode</button>
 <script>
     const data = {
         nodes: [
@@ -602,6 +685,19 @@
                 d3.select("#search-icon").dispatch("click");
             }
         }
+    });
+
+    let isDarkMode = false;
+
+    function toggleDarkMode() {
+        isDarkMode = !isDarkMode;
+        document.body.classList.toggle("dark-mode", isDarkMode);
+    }
+
+    d3.select("#dark-mode-toggle").on("click", () => {
+        toggleDarkMode();
+        const buttonText = isDarkMode ? "Light Mode" : "Dark Mode";
+        d3.select("#dark-mode-toggle").text(buttonText);
     });
 </script>
 </body>
