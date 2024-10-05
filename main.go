@@ -27,14 +27,21 @@ func main() {
 
 	if err := cmd.Run(); err != nil {
 		color.Red("❌ Error running 'go mod graph': %v", err)
-		panic(err)
+		return
 	}
 
 	color.Green("✅ 'go mod graph' command executed successfully.")
-	result, err := internal.Convert(strings.NewReader(out.String()))
+
+	goModPath := "go.mod"
+	if _, err := os.Stat(goModPath); os.IsNotExist(err) {
+		color.Red("❌ 'go.mod' file not found in the current directory.")
+		return
+	}
+
+	result, err := internal.Convert(strings.NewReader(out.String()), goModPath)
 	if err != nil {
 		color.Red("❌ Error converting graph data: %v", err)
-		panic(err)
+		return
 	}
 
 	color.Green("✅ Graph data converted successfully.")
