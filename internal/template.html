@@ -46,16 +46,25 @@
         }
         .tooltip {
             position: absolute;
-            background-color: rgba(255, 255, 255, 0.95);
-            border: 1px solid #dee2e6;
-            padding: 10px;
-            border-radius: 4px;
+            background-color: rgba(255, 255, 255, 0.98);
+            color: #333;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 8px;
             pointer-events: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
             font-size: 14px;
-            transition: all 0.2s ease;
+            line-height: 1.4;
+            transition: all 0.3s ease;
             max-width: 300px;
             word-wrap: break-word;
+            z-index: 1000;
+        }
+        .tooltip strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 16px;
+            color: #1a73e8;
         }
         .highlighted {
             stroke: #228be6;
@@ -252,9 +261,12 @@
             fill: #e9ecef;
         }
         body.dark-mode .tooltip {
-            background-color: rgba(40, 40, 40, 0.95);
-            border-color: #4a4a4a;
-            color: #f8f9fa;
+            background-color: rgba(33, 33, 33, 0.98);
+            color: #f0f0f0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        body.dark-mode .tooltip strong {
+            color: #64b5f6;
         }
         body.dark-mode #repo-info,
         body.dark-mode #legend,
@@ -528,7 +540,7 @@
     const initialY = height / 6;
     svg.call(zoom.transform, d3.zoomIdentity.translate(initialX, initialY).scale(scale));
 
-    async function fetchRepoDescription(repo) {
+    async function fetchRepoInfo(repo) {
         const [owner, name] = repo.split('/');
         const url = `https://api.github.com/repos/${owner}/${name}`;
         try {
@@ -537,10 +549,18 @@
                 throw new Error('GitHub API error');
             }
             const data = await response.json();
-            return data.description || null;
+            return {
+                description: data.description || "No description available.",
+                stars: data.stargazers_count,
+                license: data.license ? data.license.spdx_id : "No license information"
+            };
         } catch (error) {
-            console.error("Error fetching repo description:", error);
-            return null;
+            console.error("Error fetching repo info:", error);
+            return {
+                description: "Failed to fetch information.",
+                stars: null,
+                license: "Unknown"
+            };
         }
     }
 
@@ -551,14 +571,16 @@
             
             tooltip.transition()
                 .duration(200)
-                .style("opacity", .9);
-            tooltip.html("Loading description...")
-                .style("left", (event.pageX + 10) + "px")
+                .style("opacity", 1);
+            tooltip.html("<strong>Loading...</strong>")
+                .style("left", (event.pageX + 15) + "px")
                 .style("top", (event.pageY - 28) + "px");
 
-            const description = await fetchRepoDescription(repo);
-            if (description) {
-                tooltip.html(`<strong>${nodeId}</strong><br>${description}`);
+            const repoInfo = await fetchRepoInfo(repo);
+            if (repoInfo.description) {
+                const starsInfo = repoInfo.stars !== null ? `<br>⭐ ${repoInfo.stars.toLocaleString()} stars` : '';
+                const licenseInfo = `<br>📜 License: ${repoInfo.license}`;
+                tooltip.html(`<strong>${nodeId}</strong><br>${repoInfo.description}${starsInfo}${licenseInfo}`);
             } else {
                 tooltip.transition()
                     .duration(200)
