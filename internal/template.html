@@ -54,6 +54,8 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             font-size: 14px;
             transition: all 0.2s ease;
+            max-width: 300px;
+            word-wrap: break-word;
         }
         .highlighted {
             stroke: #228be6;
@@ -526,7 +528,44 @@
     const initialY = height / 6;
     svg.call(zoom.transform, d3.zoomIdentity.translate(initialX, initialY).scale(scale));
 
-    node.on("mouseover", function(event, d) {
+    async function fetchRepoDescription(repo) {
+        const [owner, name] = repo.split('/');
+        const url = `https://api.github.com/repos/${owner}/${name}`;
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error('GitHub API error');
+            }
+            const data = await response.json();
+            return data.description || null;
+        } catch (error) {
+            console.error("Error fetching repo description:", error);
+            return null;
+        }
+    }
+
+    node.on("mouseover", async function(event, d) {
+        const nodeId = d.data.id;
+        if (nodeId.startsWith("github.com/")) {
+            const repo = nodeId.replace("github.com/", "").split("@")[0];
+            
+            tooltip.transition()
+                .duration(200)
+                .style("opacity", .9);
+            tooltip.html("Loading description...")
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+
+            const description = await fetchRepoDescription(repo);
+            if (description) {
+                tooltip.html(`<strong>${nodeId}</strong><br>${description}`);
+            } else {
+                tooltip.transition()
+                    .duration(200)
+                    .style("opacity", 0);
+            }
+        }
+
         highlightPathToRoot(d);
         highlightNodeAndRoot(d);
         if (d.data.picked === false) {
@@ -535,6 +574,10 @@
             d3.select(this).classed("node-hover", true);
         }
     }).on("mouseout", function() {
+        tooltip.transition()
+            .duration(300)
+            .style("opacity", 0);
+
         clearHighlight();
         clearNodeAndRootHighlight();
         d3.select(this).classed("node-hover", false);
