@@ -8,29 +8,25 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"os"
 	"sort"
 	"strings"
 
+	"golang.org/x/mod/modfile"
 	"golang.org/x/mod/semver"
 )
 
-type Edge struct {
-	From string
-	To   string
-}
-
-type Graph struct {
-	Root        string
-	Edges       []Edge
-	MvsPicked   []string
-	MvsUnpicked []string
-}
-
-func Convert(r io.Reader) (*Graph, error) {
+func Convert(r io.Reader, goModPath string) (*Graph, error) {
 	scanner := bufio.NewScanner(r)
 	var g Graph
 	seen := make(map[string]bool)
 	mvsPicked := make(map[string]string)
+
+	rootNode, err := getRootNode(goModPath)
+	if err != nil {
+		return nil, err
+	}
+	g.Root = rootNode
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -44,6 +40,10 @@ func Convert(r io.Reader) (*Graph, error) {
 		}
 
 		from, to := parts[0], parts[1]
+		if (to != g.Root && !strings.Contains(to, "@")) || (from != g.Root && !strings.Contains(from, "@")) {
+			continue
+		}
+
 		g.Edges = append(g.Edges, Edge{From: from, To: to})
 
 		for _, node := range []string{from, to} {
@@ -55,8 +55,9 @@ func Convert(r io.Reader) (*Graph, error) {
 			var module, version string
 			if i := strings.IndexByte(node, '@'); i >= 0 {
 				module, version = node[:i], node[i+1:]
-			} else {
-				g.Root = node
+			}
+
+			if module != g.Root && version == "" {
 				continue
 			}
 
@@ -135,4 +136,21 @@ func getAllNodes(graph *Graph) []string {
 		nodes = append(nodes, node)
 	}
 	return nodes
+}
+
+func getRootNode(modPath string) (result string, err error) {
+	goModFile, err := os.ReadFile(modPath)
+	if err != nil {
+		return result, fmt.Errorf("could not read go.mod file: %v", err)
+	}
+
+	modFile, err := modfile.Parse("go.mod", goModFile, nil)
+	if err != nil {
+		return result, fmt.Errorf("could not parse go.mod file: %v", err)
+	}
+
+	if modFile.Module == nil {
+		return result, fmt.Errorf("go mod is not expected format. module not found")
+	}
+	return modFile.Module.Mod.Path, nil
 }
