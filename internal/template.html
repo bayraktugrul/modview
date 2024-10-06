@@ -46,14 +46,25 @@
         }
         .tooltip {
             position: absolute;
-            background-color: rgba(255, 255, 255, 0.95);
-            border: 1px solid #dee2e6;
-            padding: 10px;
-            border-radius: 4px;
+            background-color: rgba(255, 255, 255, 0.98);
+            color: #333;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 8px;
             pointer-events: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
             font-size: 14px;
-            transition: all 0.2s ease;
+            line-height: 1.4;
+            transition: all 0.3s ease;
+            max-width: 300px;
+            word-wrap: break-word;
+            z-index: 1000;
+        }
+        .tooltip strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 16px;
+            color: #1a73e8;
         }
         .highlighted {
             stroke: #228be6;
@@ -250,9 +261,12 @@
             fill: #e9ecef;
         }
         body.dark-mode .tooltip {
-            background-color: rgba(40, 40, 40, 0.95);
-            border-color: #4a4a4a;
-            color: #f8f9fa;
+            background-color: rgba(33, 33, 33, 0.98);
+            color: #f0f0f0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        body.dark-mode .tooltip strong {
+            color: #64b5f6;
         }
         body.dark-mode #repo-info,
         body.dark-mode #legend,
@@ -526,7 +540,81 @@
     const initialY = height / 6;
     svg.call(zoom.transform, d3.zoomIdentity.translate(initialX, initialY).scale(scale));
 
+    const repoCache = new Map();
+    let debounceTimer;
+
+    function debounce(func, delay) {
+        return function() {
+            const context = this;
+            const args = arguments;
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => func.apply(context, args), delay);
+        };
+    }
+
+    async function fetchRepoInfo(repo) {
+        if (repoCache.has(repo)) {
+            return repoCache.get(repo);
+        }
+
+        const [owner, name] = repo.split('/');
+        const url = `https://api.github.com/repos/${owner}/${name}`;
+        try {
+            const response = await fetch(url);
+            if (response.status === 403) {
+                throw new Error('GitHub API rate limit exceeded or forbidden');
+            }
+            if (!response.ok) {
+                throw new Error(`GitHub API error: ${response.status}`);
+            }
+            const data = await response.json();
+            const repoInfo = {
+                description: data.description || "No description available.",
+                stars: data.stargazers_count,
+                license: data.license ? data.license.spdx_id : "No license information"
+            };
+            repoCache.set(repo, repoInfo);
+            return repoInfo;
+        } catch (error) {
+            console.error("Error fetching repo info:", error);
+            return {
+                error: error.message
+            };
+        }
+    }
+
+    const debouncedFetchRepoInfo = debounce(async (repo, event, d) => {
+        const repoInfo = await fetchRepoInfo(repo);
+        updateTooltip(repoInfo, event, d);
+    }, 300);
+
+    function updateTooltip(repoInfo, event, d) {
+        if (repoInfo.error) {
+            tooltip.transition().duration(100).style("opacity", 0);
+        } else if (repoInfo.stars !== undefined) {
+            const starsInfo = `<br>⭐ ${repoInfo.stars.toLocaleString()} stars`;
+            const licenseInfo = `<br>📜 License: ${repoInfo.license}`;
+            tooltip.html(`<strong>${d.data.id}</strong><br>${repoInfo.description}${starsInfo}${licenseInfo}`)
+                .style("left", (event.pageX + 15) + "px")
+                .style("top", (event.pageY - 28) + "px");
+            tooltip.transition().duration(200).style("opacity", 1);
+        } else {
+            tooltip.transition().duration(100).style("opacity", 0);
+        }
+    }
+
     node.on("mouseover", function(event, d) {
+        const nodeId = d.data.id;
+        if (nodeId.startsWith("github.com/")) {
+            const repo = nodeId.replace("github.com/", "").split("@")[0];
+            
+            tooltip.transition().duration(200).style("opacity", 1);
+            tooltip.html("<strong>Loading...</strong>")
+                .style("left", (event.pageX + 15) + "px")
+                .style("top", (event.pageY - 28) + "px");
+            debouncedFetchRepoInfo(repo, event, d);
+        }
+
         highlightPathToRoot(d);
         highlightNodeAndRoot(d);
         if (d.data.picked === false) {
@@ -535,6 +623,9 @@
             d3.select(this).classed("node-hover", true);
         }
     }).on("mouseout", function() {
+        tooltip.transition().duration(200).style("opacity", 0);
+
+        clearTimeout(debounceTimer);
         clearHighlight();
         clearNodeAndRootHighlight();
         d3.select(this).classed("node-hover", false);
