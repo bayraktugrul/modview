@@ -540,26 +540,35 @@
     const initialY = height / 6;
     svg.call(zoom.transform, d3.zoomIdentity.translate(initialX, initialY).scale(scale));
 
+    const repoCache = new Map();
+
     async function fetchRepoInfo(repo) {
+        if (repoCache.has(repo)) {
+            return repoCache.get(repo);
+        }
+
         const [owner, name] = repo.split('/');
         const url = `https://api.github.com/repos/${owner}/${name}`;
         try {
             const response = await fetch(url);
+            if (response.status === 403) {
+                throw new Error('GitHub API rate limit exceeded or forbidden');
+            }
             if (!response.ok) {
-                throw new Error('GitHub API error');
+                throw new Error(`GitHub API error: ${response.status}`);
             }
             const data = await response.json();
-            return {
+            const repoInfo = {
                 description: data.description || "No description available.",
                 stars: data.stargazers_count,
                 license: data.license ? data.license.spdx_id : "No license information"
             };
+            repoCache.set(repo, repoInfo);
+            return repoInfo;
         } catch (error) {
             console.error("Error fetching repo info:", error);
             return {
-                description: "Failed to fetch information.",
-                stars: null,
-                license: "Unknown"
+                error: error.message
             };
         }
     }
@@ -577,14 +586,14 @@
                 .style("top", (event.pageY - 28) + "px");
 
             const repoInfo = await fetchRepoInfo(repo);
-            if (repoInfo.description) {
-                const starsInfo = repoInfo.stars !== null ? `<br>⭐ ${repoInfo.stars.toLocaleString()} stars` : '';
+            if (repoInfo.error) {
+                tooltip.transition().duration(100).style("opacity", 0);
+            } else if (repoInfo.stars !== undefined) {
+                const starsInfo = `<br>⭐ ${repoInfo.stars.toLocaleString()} stars`;
                 const licenseInfo = `<br>📜 License: ${repoInfo.license}`;
                 tooltip.html(`<strong>${nodeId}</strong><br>${repoInfo.description}${starsInfo}${licenseInfo}`);
             } else {
-                tooltip.transition()
-                    .duration(200)
-                    .style("opacity", 0);
+                tooltip.transition().duration(100).style("opacity", 0);
             }
         }
 
@@ -596,9 +605,7 @@
             d3.select(this).classed("node-hover", true);
         }
     }).on("mouseout", function() {
-        tooltip.transition()
-            .duration(300)
-            .style("opacity", 0);
+        tooltip.transition().duration(200).style("opacity", 0);
 
         clearHighlight();
         clearNodeAndRootHighlight();
