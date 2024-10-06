@@ -541,6 +541,16 @@
     svg.call(zoom.transform, d3.zoomIdentity.translate(initialX, initialY).scale(scale));
 
     const repoCache = new Map();
+    let debounceTimer;
+
+    function debounce(func, delay) {
+        return function() {
+            const context = this;
+            const args = arguments;
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => func.apply(context, args), delay);
+        };
+    }
 
     async function fetchRepoInfo(repo) {
         if (repoCache.has(repo)) {
@@ -573,28 +583,36 @@
         }
     }
 
-    node.on("mouseover", async function(event, d) {
+    const debouncedFetchRepoInfo = debounce(async (repo, event, d) => {
+        const repoInfo = await fetchRepoInfo(repo);
+        updateTooltip(repoInfo, event, d);
+    }, 300);
+
+    function updateTooltip(repoInfo, event, d) {
+        if (repoInfo.error) {
+            tooltip.transition().duration(100).style("opacity", 0);
+        } else if (repoInfo.stars !== undefined) {
+            const starsInfo = `<br>⭐ ${repoInfo.stars.toLocaleString()} stars`;
+            const licenseInfo = `<br>📜 License: ${repoInfo.license}`;
+            tooltip.html(`<strong>${d.data.id}</strong><br>${repoInfo.description}${starsInfo}${licenseInfo}`)
+                .style("left", (event.pageX + 15) + "px")
+                .style("top", (event.pageY - 28) + "px");
+            tooltip.transition().duration(200).style("opacity", 1);
+        } else {
+            tooltip.transition().duration(100).style("opacity", 0);
+        }
+    }
+
+    node.on("mouseover", function(event, d) {
         const nodeId = d.data.id;
         if (nodeId.startsWith("github.com/")) {
             const repo = nodeId.replace("github.com/", "").split("@")[0];
             
-            tooltip.transition()
-                .duration(200)
-                .style("opacity", 1);
+            tooltip.transition().duration(200).style("opacity", 1);
             tooltip.html("<strong>Loading...</strong>")
                 .style("left", (event.pageX + 15) + "px")
                 .style("top", (event.pageY - 28) + "px");
-
-            const repoInfo = await fetchRepoInfo(repo);
-            if (repoInfo.error) {
-                tooltip.transition().duration(100).style("opacity", 0);
-            } else if (repoInfo.stars !== undefined) {
-                const starsInfo = `<br>⭐ ${repoInfo.stars.toLocaleString()} stars`;
-                const licenseInfo = `<br>📜 License: ${repoInfo.license}`;
-                tooltip.html(`<strong>${nodeId}</strong><br>${repoInfo.description}${starsInfo}${licenseInfo}`);
-            } else {
-                tooltip.transition().duration(100).style("opacity", 0);
-            }
+            debouncedFetchRepoInfo(repo, event, d);
         }
 
         highlightPathToRoot(d);
@@ -607,6 +625,7 @@
     }).on("mouseout", function() {
         tooltip.transition().duration(200).style("opacity", 0);
 
+        clearTimeout(debounceTimer);
         clearHighlight();
         clearNodeAndRootHighlight();
         d3.select(this).classed("node-hover", false);
