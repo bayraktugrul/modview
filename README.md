@@ -4,6 +4,8 @@
 /_/  /_/\___/\_,_/|___/_/\__/|__,__/
 </code></pre>
 
+[![][workflow-badge]][workflow-actions] [![Release][release-badge]][release] [![][license-badge]][license]
+
 Transform your Go project's dependency graph into a dynamic, interactive visualization with modview.
 This powerful tool takes the complexity out of your module graph, offering a clear and explorable view of your
 project's dependencies.
@@ -72,3 +74,12 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## Contact
 
 For questions and feedback, please open an issue on the GitHub repository.
+
+[workflow-actions]: https://github.com/bayraktugrul/modview/actions
+[workflow-badge]: https://github.com/bayraktugrul/modview/workflows/build/badge.svg
+
+[license]:https://github.com/bayraktugrul/modview/blob/main/LICENSE
+[license-badge]:https://img.shields.io/badge/License-MIT-blue.svg
+
+[release]: https://github.com/bayraktugrul/modview/releases
+[release-badge]: https://img.shields.io/github/v/release/bayraktugrul/modview.svg
