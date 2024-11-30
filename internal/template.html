@@ -717,8 +717,11 @@
 
     let searchResults = [];
     let currentSearchIndex = 0;
+    let lastSearchTerm = '';
 
     function searchNodes(searchTerm) {
+        lastSearchTerm = searchTerm;
+
         searchResults = treeData.descendants().filter(node => node.data.id.toLowerCase().includes(searchTerm));
         currentSearchIndex = 0;
         if (searchResults.length > 0) {
@@ -769,7 +772,9 @@
 
     d3.select("#search-input").on("keypress", (event) => {
         if (event.key === "Enter") {
-            if (searchResults.length > 0) {
+            const searchTerm = d3.select("#search-input").property("value").toLowerCase();
+
+            if (searchResults.length > 0 && searchTerm === lastSearchTerm) {
                 currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
                 focusOnSearchResult();
             } else {
