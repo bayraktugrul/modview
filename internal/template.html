@@ -826,9 +826,20 @@
     let lastSearchTerm = '';
 
     function searchNodes(searchTerm) {
-        lastSearchTerm = searchTerm;
+        lastSearchTerm = searchTerm.toLowerCase();
+        const visibleNodes = new Set();
+        
+        node.each(function(d) {
+            if (!d3.select(this).classed("hidden")) {
+                visibleNodes.add(d.data.id);
+            }
+        });
 
-        searchResults = treeData.descendants().filter(node => node.data.id.toLowerCase().includes(searchTerm));
+        searchResults = treeData.descendants().filter(node => {
+            if (!visibleNodes.has(node.data.id)) return false;
+            return node.data.id.toLowerCase().includes(lastSearchTerm);
+        });
+        
         currentSearchIndex = 0;
         if (searchResults.length > 0) {
             focusOnSearchResult();
@@ -841,6 +852,8 @@
     function focusOnSearchResult() {
         const matchedNode = searchResults[currentSearchIndex];
         if (matchedNode) {
+            node.classed("node-highlighted", false);
+            
             const scale = 2;
             const x = width / 2 - matchedNode.y * scale;
             const y = height / 2 - matchedNode.x * scale;
@@ -852,7 +865,8 @@
                     d3.zoomIdentity.translate(x, y).scale(scale)
                 );
 
-            node.classed("node-highlighted", d => d === matchedNode);
+            // Highlight the matched node
+            d3.select(matchedNode.node).classed("node-highlighted", true);
         }
     }
 
@@ -868,23 +882,24 @@
     }
 
     d3.select("#search-icon").on("click", () => {
-        const searchTerm = d3.select("#search-input").property("value").toLowerCase();
+        const searchTerm = d3.select("#search-input").property("value").trim();
         if (searchTerm) {
             searchNodes(searchTerm);
         } else {
             hideSearchResultsCount();
+            node.classed("node-highlighted", false);
         }
     });
 
     d3.select("#search-input").on("keypress", (event) => {
         if (event.key === "Enter") {
-            const searchTerm = d3.select("#search-input").property("value").toLowerCase();
+            const searchTerm = d3.select("#search-input").property("value").trim();
 
-            if (searchResults.length > 0 && searchTerm === lastSearchTerm) {
+            if (searchResults.length > 0 && searchTerm.toLowerCase() === lastSearchTerm) {
                 currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
                 focusOnSearchResult();
             } else {
-                d3.select("#search-icon").dispatch("click");
+                searchNodes(searchTerm);
             }
         }
     });
