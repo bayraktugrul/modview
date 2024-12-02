@@ -310,6 +310,103 @@
         body.dark-mode .link {
             stroke: #adb5bd;
         }
+        .unpicked-toggle-container {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .unpicked-toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+            margin-right: 10px;
+        }
+        
+        .unpicked-toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .unpicked-toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #e9ecef;
+            transition: .3s;
+            border-radius: 24px;
+            border: 2px solid #ced4da;
+        }
+        
+        .unpicked-toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        input:checked + .unpicked-toggle-slider {
+            background-color: #228be6;
+            border-color: #1c7ed6;
+        }
+        
+        input:checked + .unpicked-toggle-slider:before {
+            transform: translateX(24px);
+        }
+        
+        .unpicked-toggle-label {
+            user-select: none;
+            font-size: 14px;
+            color: #495057;
+        }
+
+        body.dark-mode .unpicked-toggle-slider {
+            background-color: #4a4a4a;
+            border-color: #666;
+        }
+        
+        body.dark-mode .unpicked-toggle-slider:before {
+            background-color: #888;
+        }
+        
+        body.dark-mode input:checked + .unpicked-toggle-slider {
+            background-color: #1864ab;
+            border-color: #1971c2;
+        }
+        
+        body.dark-mode input:checked + .unpicked-toggle-slider:before {
+            background-color: #dee2e6;
+        }
+        
+        body.dark-mode .unpicked-toggle-label {
+            color: #dee2e6;
+        }
+
+        .toggle-container,
+        .toggle-container input[type="checkbox"],
+        .toggle-label,
+        body.dark-mode .toggle-container {
+            display: none;
+        }
+        
+        .node.hidden {
+            display: none;
+        }
+        
+        .link.hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -324,6 +421,15 @@
     <div class="legend-item">
         <div class="legend-color" style="background-color: #fff4e6; border-color: #ffa94d;"></div>
         <span>Unpicked dependency</span>
+    </div>
+    <div class="legend-item" style="margin-top: 15px;">
+        <label class="unpicked-toggle-container">
+            <div class="unpicked-toggle-switch">
+                <input type="checkbox" id="unpicked-toggle" checked>
+                <span class="unpicked-toggle-slider"></span>
+            </div>
+            <span class="unpicked-toggle-label">Show Unpicked Dependencies</span>
+        </label>
     </div>
 </div>
 <div id="search-container">
@@ -720,9 +826,20 @@
     let lastSearchTerm = '';
 
     function searchNodes(searchTerm) {
-        lastSearchTerm = searchTerm;
+        lastSearchTerm = searchTerm.toLowerCase();
+        const visibleNodes = new Set();
+        
+        node.each(function(d) {
+            if (!d3.select(this).classed("hidden")) {
+                visibleNodes.add(d.data.id);
+            }
+        });
 
-        searchResults = treeData.descendants().filter(node => node.data.id.toLowerCase().includes(searchTerm));
+        searchResults = treeData.descendants().filter(node => {
+            if (!visibleNodes.has(node.data.id)) return false;
+            return node.data.id.toLowerCase().includes(lastSearchTerm);
+        });
+        
         currentSearchIndex = 0;
         if (searchResults.length > 0) {
             focusOnSearchResult();
@@ -735,6 +852,8 @@
     function focusOnSearchResult() {
         const matchedNode = searchResults[currentSearchIndex];
         if (matchedNode) {
+            node.classed("node-highlighted", false);
+            
             const scale = 2;
             const x = width / 2 - matchedNode.y * scale;
             const y = height / 2 - matchedNode.x * scale;
@@ -746,7 +865,8 @@
                     d3.zoomIdentity.translate(x, y).scale(scale)
                 );
 
-            node.classed("node-highlighted", d => d === matchedNode);
+            // Highlight the matched node
+            d3.select(matchedNode.node).classed("node-highlighted", true);
         }
     }
 
@@ -762,23 +882,24 @@
     }
 
     d3.select("#search-icon").on("click", () => {
-        const searchTerm = d3.select("#search-input").property("value").toLowerCase();
+        const searchTerm = d3.select("#search-input").property("value").trim();
         if (searchTerm) {
             searchNodes(searchTerm);
         } else {
             hideSearchResultsCount();
+            node.classed("node-highlighted", false);
         }
     });
 
     d3.select("#search-input").on("keypress", (event) => {
         if (event.key === "Enter") {
-            const searchTerm = d3.select("#search-input").property("value").toLowerCase();
+            const searchTerm = d3.select("#search-input").property("value").trim();
 
-            if (searchResults.length > 0 && searchTerm === lastSearchTerm) {
+            if (searchResults.length > 0 && searchTerm.toLowerCase() === lastSearchTerm) {
                 currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
                 focusOnSearchResult();
             } else {
-                d3.select("#search-icon").dispatch("click");
+                searchNodes(searchTerm);
             }
         }
     });
@@ -795,6 +916,33 @@
         const buttonText = isDarkMode ? "Light Mode" : "Dark Mode";
         d3.select("#dark-mode-toggle").text(buttonText);
     });
+
+    function updateUnpickedVisibility() {
+        const showUnpicked = d3.select("#unpicked-toggle").property("checked");
+
+        node.classed("hidden", d => !showUnpicked && d.data.picked === false);
+        link.classed("hidden", d => !showUnpicked && (d.target.data.picked === false || d.source.data.picked === false));
+        
+        if (!showUnpicked) {
+            const visibleLinks = link.filter(function() {
+                return !d3.select(this).classed("hidden");
+            }).data();
+            const nodesWithConnections = new Set();
+            visibleLinks.forEach(l => {
+                nodesWithConnections.add(l.source.id);
+                nodesWithConnections.add(l.target.id);
+            });
+            
+            nodesWithConnections.add(data.root);
+            
+            node.classed("hidden", d => {
+                if (d.data.picked === false) return true;
+                return !nodesWithConnections.has(d.data.id);
+            });
+        }
+    }
+
+    d3.select("#unpicked-toggle").on("change", updateUnpickedVisibility);
 </script>
 </body>
 </html>
