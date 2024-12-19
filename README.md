@@ -5,6 +5,7 @@
 </code></pre>
 
 [![][workflow-badge]][workflow-actions] [![Release][release-badge]][release] [![][license-badge]][license]
+[![go-recipes](https://raw.githubusercontent.com/nikolaydubina/go-recipes/main/badge.svg?raw=true)](https://github.com/nikolaydubina/go-recipes)
 
 Transform your Go project's dependency graph into a dynamic, interactive visualization with modview.
 This powerful tool takes the complexity out of your module graph, offering a clear and explorable view of your
